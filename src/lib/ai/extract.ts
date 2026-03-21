@@ -24,48 +24,13 @@ const aiExtractionSchema = z.object({
   confidence: z.number().min(0).max(1),
 });
 
-// ─── Mock Extraction for Development ────────────────────────────
-
-function getMockExtraction(): AiExtraction {
-  return {
-    vendor: "Muster Bürobedarf GmbH",
-    amount: 238.0,
-    netAmount: 200.0,
-    taxRate: 19,
-    taxAmount: 38.0,
-    invoiceNumber: "RE-2024-00847",
-    invoiceDate: "2024-11-15",
-    lineItems: [
-      {
-        description: "Druckerpapier A4, 500 Blatt, 5er Pack",
-        quantity: 2,
-        unitPrice: 24.95,
-        total: 49.9,
-      },
-      {
-        description: "Tintenpatronen Multipack (CMYK)",
-        quantity: 3,
-        unitPrice: 34.99,
-        total: 104.97,
-      },
-      {
-        description: "Ordner A4 breit, grau, 10er Pack",
-        quantity: 1,
-        unitPrice: 45.13,
-        total: 45.13,
-      },
-    ],
-    confidence: 0.91,
-  };
-}
-
 // ─── Main Extraction Function ───────────────────────────────────
 
 /**
  * Extrahiert strukturierte Rechnungsdaten aus OCR-Text mittels Claude AI.
  *
- * Bei fehlendem API-Key wird eine Mock-Extraktion zurückgegeben,
- * sodass die Anwendung auch ohne API-Key im Demo-Modus funktioniert.
+ * Benötigt einen konfigurierten ANTHROPIC_API_KEY. Ohne API-Key
+ * wird null zurückgegeben und eine Warnung geloggt.
  *
  * @param ocrText - Der rohe OCR-Text des Dokuments
  * @returns Die extrahierten Daten oder null bei Fehler
@@ -73,13 +38,12 @@ function getMockExtraction(): AiExtraction {
 export async function extractDocumentData(
   ocrText: string
 ): Promise<AiExtraction | null> {
-  // Mock mode if no API key
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.warn(
-      "[AI Extract] ANTHROPIC_API_KEY nicht gesetzt — verwende Mock-Extraktion für Demo-Modus."
+      "[AI Extract] ANTHROPIC_API_KEY nicht konfiguriert — KI-Extraktion nicht verfügbar."
     );
-    return getMockExtraction();
+    return null;
   }
 
   try {

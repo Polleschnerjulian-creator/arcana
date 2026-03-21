@@ -1,52 +1,60 @@
-import fs from "fs/promises";
-import path from "path";
+import { put, del } from "@vercel/blob";
 import { computeSHA256 } from "@/lib/compliance/hash";
 
-const STORAGE_BASE = path.join(process.cwd(), "storage", "documents");
-
 /**
- * Speichert eine Datei im lokalen Dateisystem.
- * Erstellt ein organisationsspezifisches Verzeichnis und generiert
+ * Speichert eine Datei in Vercel Blob Storage.
+ * Erstellt einen organisationsspezifischen Pfad und generiert
  * einen eindeutigen Dateinamen mit Zeitstempel.
+ *
+ * Benötigt die Umgebungsvariable BLOB_READ_WRITE_TOKEN auf Vercel.
  */
 export async function saveDocument(
   file: Buffer,
   fileName: string,
   organizationId: string
 ): Promise<{ storagePath: string; sha256Hash: string }> {
-  // Org-spezifisches Verzeichnis erstellen
-  const orgDir = path.join(STORAGE_BASE, organizationId);
-  await fs.mkdir(orgDir, { recursive: true });
-
-  // Eindeutiger Dateiname: Zeitstempel + Originalname (bereinigt)
-  const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const uniqueName = `${Date.now()}-${sanitizedName}`;
-  const filePath = path.join(orgDir, uniqueName);
-
-  // Datei schreiben
-  await fs.writeFile(filePath, file);
-
   // SHA-256-Hash für GoBD-Konformität berechnen
   const sha256Hash = computeSHA256(file);
 
-  // Relativer Pfad (ab storage/documents/)
-  const storagePath = path.join(organizationId, uniqueName);
+  const blobPath = `documents/${organizationId}/${Date.now()}-${fileName}`;
 
-  return { storagePath, sha256Hash };
+  const blob = await put(blobPath, file, {
+    access: "public",
+    contentType: getMimeType(fileName),
+  });
+
+  return {
+    storagePath: blob.url, // Blob-URL als storagePath speichern
+    sha256Hash,
+  };
 }
 
 /**
- * Gibt den absoluten Pfad einer gespeicherten Datei zurück.
+ * Gibt die URL eines gespeicherten Dokuments zurück.
+ * storagePath ist jetzt direkt die Vercel Blob URL.
  */
-export function getDocumentPath(storagePath: string): string {
-  return path.join(STORAGE_BASE, storagePath);
+export function getDocumentUrl(storagePath: string): string {
+  return storagePath;
 }
 
 /**
- * Löscht eine Datei aus dem lokalen Dateisystem.
- * Nur für Entwürfe / nicht verknüpfte Belege verwenden.
+ * Löscht eine Datei aus dem Vercel Blob Storage.
  */
 export async function deleteDocument(storagePath: string): Promise<void> {
-  const filePath = getDocumentPath(storagePath);
-  await fs.unlink(filePath);
+  await del(storagePath);
+}
+
+function getMimeType(fileName: string): string {
+  const ext = fileName.toLowerCase().split(".").pop();
+  const mimeTypes: Record<string, string> = {
+    pdf: "application/pdf",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif",
+    heic: "image/heic",
+    heif: "image/heif",
+  };
+  return mimeTypes[ext || ""] || "application/octet-stream";
 }

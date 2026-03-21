@@ -35,27 +35,6 @@ const categorizationSchema = z.object({
   confidence: z.number().min(0).max(1),
 });
 
-// ─── Mock Response ──────────────────────────────────────────────
-
-function getMockCategorization(
-  chartOfAccounts: "SKR03" | "SKR04"
-): CategorizationResult {
-  if (chartOfAccounts === "SKR04") {
-    return {
-      debitAccount: "6300",
-      creditAccount: "1800",
-      taxRate: 19,
-      confidence: 0.78,
-    };
-  }
-  return {
-    debitAccount: "4900",
-    creditAccount: "1200",
-    taxRate: 19,
-    confidence: 0.78,
-  };
-}
-
 // ─── Main Function ──────────────────────────────────────────────
 
 /**
@@ -63,6 +42,9 @@ function getMockCategorization(
  *
  * Nutzt den Kontenrahmen (SKR03/SKR04) und vorherige Buchungen
  * desselben Geschäftspartners als Kontext.
+ *
+ * Benötigt einen konfigurierten ANTHROPIC_API_KEY. Ohne API-Key
+ * wird null zurückgegeben und eine Warnung geloggt.
  *
  * @returns Kontovorschläge oder null bei Fehler
  */
@@ -72,9 +54,9 @@ export async function categorizeTransaction(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.warn(
-      "[AI Categorize] ANTHROPIC_API_KEY nicht gesetzt — verwende Mock-Kategorisierung."
+      "[AI Categorize] ANTHROPIC_API_KEY nicht konfiguriert — KI-Kategorisierung nicht verfügbar."
     );
-    return getMockCategorization(params.chartOfAccounts);
+    return null;
   }
 
   try {

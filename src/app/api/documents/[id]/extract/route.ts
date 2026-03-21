@@ -8,7 +8,7 @@ import { extractDocumentData } from "@/lib/ai/extract";
 
 export async function POST(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,10 +20,12 @@ export async function POST(
       );
     }
 
+    const { id } = await params;
+
     // Verify document belongs to user's organization
     const document = await prisma.document.findFirst({
       where: {
-        id: params.id,
+        id,
         organizationId: session.user.organizationId,
       },
     });
@@ -50,19 +52,22 @@ export async function POST(
     const extraction = await extractDocumentData(document.ocrText);
 
     if (!extraction) {
+      // Distinguish between missing API key and actual failure
+      const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
       return NextResponse.json(
         {
           success: false,
-          error:
-            "KI-Extraktion fehlgeschlagen. Bitte versuchen Sie es erneut.",
+          error: hasApiKey
+            ? "KI-Extraktion fehlgeschlagen. Bitte versuchen Sie es erneut."
+            : "KI-Extraktion nicht verfügbar. Bitte ANTHROPIC_API_KEY konfigurieren.",
         },
-        { status: 500 }
+        { status: hasApiKey ? 500 : 503 }
       );
     }
 
     // Save extraction result
     const updated = await prisma.document.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         aiExtraction: JSON.stringify(extraction),
       },

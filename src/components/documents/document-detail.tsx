@@ -277,7 +277,7 @@ export function DocumentDetail({ document: initialDoc }: DocumentDetailProps) {
             <div className="rounded-lg border border-border overflow-hidden bg-gray-50">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/api/documents/${doc.id}/file`}
+                src={doc.storagePath.startsWith("http") ? doc.storagePath : `/api/documents/${doc.id}/file`}
                 alt={doc.fileName}
                 className="max-w-full h-auto max-h-[500px] object-contain mx-auto"
               />
@@ -288,7 +288,7 @@ export function DocumentDetail({ document: initialDoc }: DocumentDetailProps) {
               <p className="text-sm">PDF-Vorschau nicht verfügbar</p>
               <Button variant="secondary" size="sm" asChild>
                 <a
-                  href={`/api/documents/${doc.id}/file`}
+                  href={doc.storagePath.startsWith("http") ? doc.storagePath : `/api/documents/${doc.id}/file`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

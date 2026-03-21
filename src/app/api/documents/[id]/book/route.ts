@@ -19,7 +19,7 @@ const DEFAULT_ACCOUNTS: Record<ChartOfAccounts, { expense: string; bank: string 
 
 export async function POST(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -31,10 +31,12 @@ export async function POST(
       );
     }
 
+    const { id } = await params;
+
     // Load document with org info
     const document = await prisma.document.findFirst({
       where: {
-        id: params.id,
+        id,
         organizationId: session.user.organizationId,
       },
     });
@@ -82,6 +84,29 @@ export async function POST(
       );
     }
 
+    // Validate required fields — don't silently fill in defaults
+    if (extraction.taxRate == null) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Kein Steuersatz in der KI-Extraktion erkannt. Bitte manuell buchen.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!extraction.vendor) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Kein Lieferant in der KI-Extraktion erkannt. Bitte manuell buchen.",
+        },
+        { status: 400 }
+      );
+    }
+
     // Get organization's chart of accounts
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
@@ -93,7 +118,7 @@ export async function POST(
 
     // Determine amounts
     const grossAmount = extraction.amount;
-    const taxRate = extraction.taxRate ?? 19;
+    const taxRate = extraction.taxRate;
     const { net: netAmount, tax: taxAmount } =
       extraction.netAmount && extraction.taxAmount
         ? { net: extraction.netAmount, tax: extraction.taxAmount }
@@ -212,7 +237,7 @@ export async function POST(
 
     // Build description
     const description = [
-      extraction.vendor || "Eingangsrechnung",
+      extraction.vendor,
       extraction.invoiceNumber ? `Nr. ${extraction.invoiceNumber}` : null,
       extraction.invoiceDate
         ? `vom ${new Date(extraction.invoiceDate).toLocaleDateString("de-DE")}`
