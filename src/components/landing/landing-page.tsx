@@ -137,7 +137,7 @@ function Hero() {
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0">
             {[
               { icon: Upload, label: "Beleg hochgeladen" },
-              { icon: ScanText, label: "OCR" },
+              { icon: ScanText, label: "Texterkennung" },
               { icon: Bot, label: "KI-Extraktion" },
               { icon: Check, label: "Buchung erstellt" },
             ].map((step, i) => (
@@ -352,7 +352,7 @@ function HowItWorks() {
               icon: Sparkles,
               title: "KI erkennt alles",
               description:
-                "OCR liest den Beleg. KI extrahiert Lieferant, Betrag, Steuer und schlägt das Konto vor.",
+                "Texterkennung liest den Beleg. KI extrahiert Lieferant, Betrag, Steuer und schlägt das Konto vor.",
             },
             {
               step: "03",

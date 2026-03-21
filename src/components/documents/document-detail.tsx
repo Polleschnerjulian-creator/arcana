@@ -72,13 +72,13 @@ function getDocumentTypeLabel(type: string): string {
 function getOcrStatusBadge(status: OcrStatus) {
   switch (status) {
     case "DONE":
-      return <Badge variant="success">OCR abgeschlossen</Badge>;
+      return <Badge variant="success">Text erkannt</Badge>;
     case "PROCESSING":
-      return <Badge variant="info">OCR läuft...</Badge>;
+      return <Badge variant="info">Text wird erkannt...</Badge>;
     case "FAILED":
-      return <Badge variant="danger">OCR fehlgeschlagen</Badge>;
+      return <Badge variant="danger">Texterkennung fehlgeschlagen</Badge>;
     default:
-      return <Badge variant="default">OCR ausstehend</Badge>;
+      return <Badge variant="default">Wird verarbeitet...</Badge>;
   }
 }
 
@@ -123,7 +123,7 @@ export function DocumentDetail({ document: initialDoc }: DocumentDetailProps) {
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.error || "OCR fehlgeschlagen.");
+        setError(data.error || "Texterkennung fehlgeschlagen.");
         return;
       }
 
@@ -133,7 +133,7 @@ export function DocumentDetail({ document: initialDoc }: DocumentDetailProps) {
         ocrStatus: data.data.ocrStatus,
       }));
     } catch {
-      setError("Netzwerkfehler beim Starten der OCR.");
+      setError("Netzwerkfehler beim Starten der Texterkennung.");
     } finally {
       setOcrLoading(false);
     }
@@ -312,7 +312,7 @@ export function DocumentDetail({ document: initialDoc }: DocumentDetailProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ScanText className="h-5 w-5 text-text-secondary" />
-              <CardTitle className="text-base">OCR-Texterkennung</CardTitle>
+              <CardTitle className="text-base">Texterkennung</CardTitle>
             </div>
             {doc.ocrStatus === "PENDING" && (
               <Button
@@ -328,7 +328,7 @@ export function DocumentDetail({ document: initialDoc }: DocumentDetailProps) {
                 ) : (
                   <>
                     <ScanText className="h-4 w-4" />
-                    OCR starten
+                    Texterkennung starten
                   </>
                 )}
               </Button>
@@ -346,12 +346,12 @@ export function DocumentDetail({ document: initialDoc }: DocumentDetailProps) {
                 {ocrExpanded ? (
                   <>
                     <ChevronUp className="h-4 w-4" />
-                    OCR-Text ausblenden
+                    Erkannter Text ausblenden
                   </>
                 ) : (
                   <>
                     <ChevronDown className="h-4 w-4" />
-                    OCR-Text anzeigen
+                    Erkannter Text anzeigen
                   </>
                 )}
               </button>
@@ -373,7 +373,7 @@ export function DocumentDetail({ document: initialDoc }: DocumentDetailProps) {
             </div>
           ) : (
             <p className="text-sm text-text-secondary">
-              Starten Sie die OCR-Texterkennung, um den Beleginhalt zu
+              Starten Sie die Texterkennung, um den Beleginhalt zu
               analysieren.
             </p>
           )}

@@ -348,7 +348,7 @@ export function DocumentReviewPanel({
           <div className="flex-1 p-5 space-y-4">
             {/* Pipeline Progress */}
             <div className="flex flex-wrap items-center gap-1">
-              <PipelineStep label="OCR" status={ocrStep} />
+              <PipelineStep label="Texterkennung" status={ocrStep} />
               <PipelineStep label="KI-Extraktion" status={aiStep} />
               <PipelineStep
                 label="Buchungsvorschlag"

@@ -68,9 +68,9 @@ const TYPE_VARIANTS: Record<
 
 function getOcrLabel(doc: DocumentItem): string {
   if (doc.ocrStatus === "PENDING") return "Wird verarbeitet...";
-  if (doc.ocrStatus === "PROCESSING") return "OCR l\u00e4uft...";
+  if (doc.ocrStatus === "PROCESSING") return "Text wird erkannt...";
   if (doc.ocrStatus === "DONE" && doc.aiExtraction) return "Verarbeitet";
-  if (doc.ocrStatus === "DONE") return "OCR fertig";
+  if (doc.ocrStatus === "DONE") return "Text erkannt";
   if (doc.ocrStatus === "FAILED") return "Fehler";
   return doc.ocrStatus;
 }

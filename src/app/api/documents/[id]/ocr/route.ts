@@ -58,7 +58,7 @@ export async function POST(
         {
           success: false,
           error:
-            "PDF-OCR wird in einer zukünftigen Version unterstützt. Bitte laden Sie ein Bild hoch.",
+            "PDF-Texterkennung wird in einer zukünftigen Version unterstützt. Bitte laden Sie ein Bild hoch.",
         },
         { status: 400 }
       );
@@ -98,7 +98,7 @@ export async function POST(
           data: { ocrStatus: "FAILED" },
         });
         return NextResponse.json(
-          { success: false, error: "Datei zu groß für OCR-Verarbeitung (max. 10 MB)." },
+          { success: false, error: "Datei zu groß für Texterkennung (max. 10 MB)." },
           { status: 413 }
         );
       }
@@ -139,7 +139,7 @@ export async function POST(
         {
           success: false,
           error:
-            "OCR-Verarbeitung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            "Texterkennung fehlgeschlagen. Bitte versuchen Sie es erneut.",
         },
         { status: 500 }
       );

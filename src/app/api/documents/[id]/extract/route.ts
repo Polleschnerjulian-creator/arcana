@@ -42,7 +42,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: "OCR noch nicht abgeschlossen. Bitte zuerst OCR starten.",
+          error: "Texterkennung noch nicht abgeschlossen. Bitte zuerst Texterkennung starten.",
         },
         { status: 400 }
       );
