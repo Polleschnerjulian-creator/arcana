@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DocumentList } from "@/components/documents/document-list";
+import { DocumentReviewList } from "@/components/documents/document-review-list";
 
 export default async function DocumentsPage() {
   const session = await getServerSession(authOptions);
@@ -12,8 +13,11 @@ export default async function DocumentsPage() {
     redirect("/login");
   }
 
+  const organizationId = session.user.organizationId;
+
+  // Fetch all documents for the list
   const documents = await prisma.document.findMany({
-    where: { organizationId: session.user.organizationId },
+    where: { organizationId },
     include: {
       uploadedBy: {
         select: { id: true, name: true },
@@ -22,7 +26,55 @@ export default async function DocumentsPage() {
     orderBy: { uploadedAt: "desc" },
   });
 
-  // Serialize for client component
+  // Fetch documents needing review (pipeline complete with DRAFT, or failed states)
+  const reviewDocuments = await prisma.document.findMany({
+    where: {
+      organizationId,
+      OR: [
+        // Pipeline complete with DRAFT transaction
+        {
+          ocrStatus: "DONE",
+          aiExtraction: { not: null },
+          transactions: {
+            some: { status: "DRAFT" },
+          },
+        },
+        // OCR done but AI extraction failed
+        {
+          ocrStatus: "DONE",
+          aiExtraction: null,
+        },
+        // OCR failed
+        {
+          ocrStatus: "FAILED",
+        },
+        // Pipeline still running
+        {
+          ocrStatus: { in: ["PENDING", "PROCESSING"] },
+        },
+      ],
+    },
+    include: {
+      uploadedBy: {
+        select: { id: true, name: true },
+      },
+      transactions: {
+        where: { status: "DRAFT" },
+        include: {
+          lines: {
+            include: {
+              account: {
+                select: { id: true, number: true, name: true, type: true },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { uploadedAt: "desc" },
+  });
+
+  // Serialize documents for the list
   const serialized = documents.map((doc) => ({
     id: doc.id,
     fileName: doc.fileName,
@@ -39,6 +91,38 @@ export default async function DocumentsPage() {
     sha256Hash: doc.sha256Hash,
     uploadedAt: doc.uploadedAt.toISOString(),
     uploadedBy: doc.uploadedBy,
+  }));
+
+  // Serialize review documents
+  const reviewSerialized = reviewDocuments.map((doc) => ({
+    id: doc.id,
+    fileName: doc.fileName,
+    mimeType: doc.mimeType,
+    fileSize: doc.fileSize,
+    type: doc.type,
+    ocrStatus: doc.ocrStatus,
+    aiExtraction: doc.aiExtraction,
+    uploadedAt: doc.uploadedAt.toISOString(),
+    uploadedBy: doc.uploadedBy,
+    transaction: doc.transactions[0]
+      ? {
+          id: doc.transactions[0].id,
+          date: doc.transactions[0].date.toISOString(),
+          description: doc.transactions[0].description,
+          reference: doc.transactions[0].reference,
+          status: doc.transactions[0].status,
+          aiConfidence: doc.transactions[0].aiConfidence,
+          lines: doc.transactions[0].lines.map((line) => ({
+            id: line.id,
+            accountId: line.accountId,
+            debit: Number(line.debit),
+            credit: Number(line.credit),
+            taxRate: line.taxRate,
+            note: line.note,
+            account: line.account,
+          })),
+        }
+      : null,
   }));
 
   // Stats
@@ -88,6 +172,12 @@ export default async function DocumentsPage() {
         </Link>
       </div>
 
+      {/* Review Section */}
+      {reviewSerialized.length > 0 && (
+        <DocumentReviewList documents={reviewSerialized} />
+      )}
+
+      {/* All Documents */}
       <DocumentList documents={serialized} />
     </div>
   );

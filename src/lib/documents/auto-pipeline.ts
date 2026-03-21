@@ -12,7 +12,7 @@ import type { AiExtraction } from "@/types";
  * failures in one step don't prevent status updates or logging.
  *
  * Pipeline:
- * 1. OCR (images only, German language)
+ * 1. OCR (images via Tesseract, PDFs via pdfjs-dist text extraction)
  * 2. AI extraction (if ANTHROPIC_API_KEY is set)
  * 3. Auto-create DRAFT transaction (if confidence > 0.5)
  */
@@ -38,27 +38,103 @@ export async function runDocumentPipeline(
     return;
   }
 
-  // ─── Step 1: OCR ────────────────────────────────────────────────
+  // ─── Step 1: OCR / Text Extraction ────────────────────────────
   let ocrText: string | null = null;
 
-  // PDF: not yet supported
+  // PDF: extract text with pdfjs-dist
   if (document.mimeType === "application/pdf") {
     try {
+      // Mark as processing
       await prisma.document.update({
         where: { id: documentId },
-        data: { ocrStatus: "FAILED" },
+        data: { ocrStatus: "PROCESSING" },
       });
-    } catch (err) {
-      console.error("[Auto-Pipeline] Failed to update PDF status:", err);
-    }
-    console.log(
-      `[Auto-Pipeline] PDF OCR not yet supported for document ${documentId}`
-    );
-    return;
-  }
 
+      // Fetch PDF from storage
+      if (!document.storagePath.startsWith("http")) {
+        throw new Error("Storage path is not a fetchable URL");
+      }
+
+      const response = await fetch(document.storagePath);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const pdfBuffer = new Uint8Array(arrayBuffer);
+
+      // Use pdfjs-dist to extract text directly from PDF
+      // This works better than OCR for digital PDFs (most invoices)
+      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      const doc = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+
+      let extractedText = "";
+      const numPages = doc.numPages;
+
+      // Extract text from all pages (up to 10 pages for performance)
+      const maxPages = Math.min(numPages, 10);
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await doc.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: Record<string, unknown>) =>
+            "str" in item ? (item.str as string) : ""
+          )
+          .join(" ");
+        extractedText += pageText + "\n";
+      }
+
+      extractedText = extractedText.trim();
+
+      // Check if we got substantial text (digital PDF)
+      if (extractedText.length > 50) {
+        ocrText = extractedText;
+
+        await prisma.document.update({
+          where: { id: documentId },
+          data: {
+            ocrText,
+            ocrStatus: "DONE",
+          },
+        });
+
+        console.log(
+          `[Auto-Pipeline] PDF text extraction completed for document ${documentId} (${extractedText.length} chars, ${numPages} pages)`
+        );
+      } else {
+        // Scanned PDF with no embedded text
+        await prisma.document.update({
+          where: { id: documentId },
+          data: {
+            ocrStatus: "FAILED",
+            ocrText:
+              "Gescanntes PDF — bitte als Bild hochladen oder digitales PDF verwenden.",
+          },
+        });
+
+        console.log(
+          `[Auto-Pipeline] Scanned PDF detected for document ${documentId} — no extractable text (${extractedText.length} chars)`
+        );
+        return; // Stop pipeline — can't extract from scanned PDF without canvas
+      }
+    } catch (err) {
+      console.error("[Auto-Pipeline] PDF text extraction failed:", err);
+      try {
+        await prisma.document.update({
+          where: { id: documentId },
+          data: { ocrStatus: "FAILED" },
+        });
+      } catch (updateErr) {
+        console.error(
+          "[Auto-Pipeline] Failed to update PDF failure status:",
+          updateErr
+        );
+      }
+      return;
+    }
+  }
   // Images: run Tesseract.js
-  if (document.mimeType.startsWith("image/")) {
+  else if (document.mimeType.startsWith("image/")) {
     try {
       // Mark as processing
       await prisma.document.update({
