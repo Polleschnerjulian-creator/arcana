@@ -109,13 +109,13 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
     <>
       {/* Logo */}
       <div className={cn(
-        "flex h-20 items-center justify-between px-4",
+        "flex h-24 items-center justify-between px-5",
         collapsed && "md:px-2"
       )}>
         {/* Mobile: always show full logo with close button */}
         <div className="md:hidden flex items-center justify-between w-full">
           <Link href="/dashboard" className="flex items-center" onClick={onMobileClose}>
-            <img src="/arcana-logo.png" alt="ARCANA" className="h-9" />
+            <img src="/arcana-logo.png" alt="ARCANA" className="h-14" />
           </Link>
           <button
             onClick={onMobileClose}
@@ -133,9 +133,9 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
             collapsed ? "mx-auto" : "gap-2.5"
           )}>
             {collapsed ? (
-              <img src="/arcana-logo.png" alt="ARCANA" className="h-7 w-7 object-contain object-left" />
+              <img src="/arcana-logo.png" alt="ARCANA" className="h-9 w-9 object-contain object-left" />
             ) : (
-              <img src="/arcana-logo.png" alt="ARCANA" className="h-9" />
+              <img src="/arcana-logo.png" alt="ARCANA" className="h-14" />
             )}
           </Link>
         </div>
