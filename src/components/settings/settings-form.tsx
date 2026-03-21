@@ -319,7 +319,7 @@ export function SettingsForm({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-light">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
               <Building2 className="h-4 w-4 text-primary" />
             </div>
             <div>

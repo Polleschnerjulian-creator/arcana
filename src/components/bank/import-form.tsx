@@ -291,7 +291,7 @@ export function ImportForm({ bankAccounts }: ImportFormProps) {
                       : "border-border hover:border-border-hover hover:bg-gray-50"
                   )}
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-light flex-shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 flex-shrink-0">
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -421,7 +421,7 @@ export function ImportForm({ bankAccounts }: ImportFormProps) {
                 className={cn(
                   "border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all",
                   isDragging
-                    ? "border-primary bg-teal-50/50"
+                    ? "border-primary bg-gray-50/50"
                     : "border-border hover:border-primary/50 hover:bg-gray-50"
                 )}
               >

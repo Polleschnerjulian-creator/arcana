@@ -111,15 +111,15 @@ export function AiSuggestionCard({
   }
 
   return (
-    <Card className="border-teal-200 bg-gradient-to-br from-teal-50/40 via-white to-teal-50/20 overflow-hidden">
+    <Card className="border-gray-200 bg-gradient-to-br from-gray-50/40 via-white to-gray-50/20 overflow-hidden">
       {/* Subtle decorative top bar */}
-      <div className="h-1 bg-gradient-to-r from-teal-400 via-teal-500 to-teal-600" />
+      <div className="h-1 bg-gradient-to-r from-neutral-400 via-neutral-600 to-neutral-800" />
 
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-100">
-              <Sparkles className="h-5 w-5 text-teal-600" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+              <Sparkles className="h-5 w-5 text-gray-600" />
             </div>
             <div>
               <CardTitle className="text-base">KI-Analyse</CardTitle>
@@ -173,9 +173,9 @@ export function AiSuggestionCard({
         </div>
 
         {/* Amount breakdown */}
-        <div className="rounded-lg border border-teal-100 bg-white/80 p-4">
+        <div className="rounded-lg border border-gray-200 bg-white/80 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="h-4 w-4 text-teal-600" />
+            <TrendingUp className="h-4 w-4 text-gray-600" />
             <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
               Beträge
             </p>
@@ -201,12 +201,12 @@ export function AiSuggestionCard({
             )}
             {extraction.amount != null && (
               <>
-                <div className="border-t border-teal-100 my-2" />
+                <div className="border-t border-gray-200 my-2" />
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-text-primary">
                     Brutto
                   </span>
-                  <span className="text-base font-mono font-bold text-teal-700">
+                  <span className="text-base font-mono font-bold text-gray-900">
                     {formatCurrency(extraction.amount)}
                   </span>
                 </div>
@@ -221,10 +221,10 @@ export function AiSuggestionCard({
             <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
               Positionen
             </p>
-            <div className="rounded-lg border border-teal-100 overflow-hidden">
+            <div className="rounded-lg border border-gray-200 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-teal-50/60">
+                  <tr className="bg-gray-50/60">
                     <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">
                       Beschreibung
                     </th>
@@ -243,7 +243,7 @@ export function AiSuggestionCard({
                   {extraction.lineItems.map((item, idx) => (
                     <tr
                       key={idx}
-                      className="border-t border-teal-50 hover:bg-teal-50/30 transition-colors"
+                      className="border-t border-gray-100 hover:bg-gray-50/30 transition-colors"
                     >
                       <td className="py-2 px-3 text-text-primary">
                         {item.description}

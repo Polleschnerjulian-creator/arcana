@@ -157,7 +157,7 @@ export function DocumentUpload() {
         className={cn(
           "border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all",
           isDragging
-            ? "border-primary bg-teal-50/50"
+            ? "border-primary bg-gray-50/50"
             : "border-border hover:border-primary/50 hover:bg-surface"
         )}
       >

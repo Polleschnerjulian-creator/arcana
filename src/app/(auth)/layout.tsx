@@ -12,7 +12,7 @@ export default function AuthLayout({
         <div
           className="fixed inset-0 -z-10"
           style={{
-            background: "linear-gradient(135deg, #F5F5F7 0%, #E8F5F3 30%, #F0FDFA 50%, #F5F5F7 70%, #EDF2F7 100%)",
+            background: "linear-gradient(135deg, #F5F5F7 0%, #ECECEE 30%, #F5F5F7 50%, #ECECEE 70%, #F5F5F7 100%)",
           }}
         />
 
@@ -20,7 +20,7 @@ export default function AuthLayout({
         <div
           className="fixed -z-10 h-[500px] w-[500px] rounded-full opacity-30 blur-[120px]"
           style={{
-            background: "radial-gradient(circle, rgba(13,148,136,0.4) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(0,0,0,0.08) 0%, transparent 70%)",
             top: "10%",
             left: "15%",
             animation: "orbFloat1 20s ease-in-out infinite",
@@ -29,7 +29,7 @@ export default function AuthLayout({
         <div
           className="fixed -z-10 h-[400px] w-[400px] rounded-full opacity-20 blur-[100px]"
           style={{
-            background: "radial-gradient(circle, rgba(20,184,166,0.5) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(0,0,0,0.1) 0%, transparent 70%)",
             bottom: "10%",
             right: "10%",
             animation: "orbFloat2 25s ease-in-out infinite",
@@ -38,7 +38,7 @@ export default function AuthLayout({
         <div
           className="fixed -z-10 h-[350px] w-[350px] rounded-full opacity-15 blur-[90px]"
           style={{
-            background: "radial-gradient(circle, rgba(13,148,136,0.3) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(0,0,0,0.06) 0%, transparent 70%)",
             top: "50%",
             right: "30%",
             animation: "orbFloat3 18s ease-in-out infinite",

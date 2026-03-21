@@ -10,12 +10,12 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#0D9488",
-          light: "#14B8A6",
-          dark: "#0F766E",
-          hover: "#0F766E",
-          50: "#F0FDFA",
-          glow: "rgba(13, 148, 136, 0.15)",
+          DEFAULT: "#1D1D1F",
+          light: "#3A3A3C",
+          dark: "#000000",
+          hover: "#000000",
+          50: "#F5F5F7",
+          glow: "rgba(0, 0, 0, 0.08)",
         },
         background: "#F5F5F7",
         surface: "rgba(255, 255, 255, 0.72)",
@@ -100,8 +100,8 @@ const config: Config = {
         md: "0 4px 20px rgba(0, 0, 0, 0.07), 0 0 1px rgba(0, 0, 0, 0.08)",
         lg: "0 8px 32px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1)",
         xl: "0 16px 48px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.1)",
-        glow: "0 0 20px rgba(13, 148, 136, 0.15), 0 2px 8px rgba(0, 0, 0, 0.06)",
-        "glow-lg": "0 0 32px rgba(13, 148, 136, 0.2), 0 4px 16px rgba(0, 0, 0, 0.08)",
+        glow: "0 0 20px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06)",
+        "glow-lg": "0 0 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)",
         inner: "inset 0 1px 3px rgba(0, 0, 0, 0.04)",
       },
       transitionDuration: {

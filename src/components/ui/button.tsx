@@ -15,9 +15,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary: [
-        "bg-gradient-to-b from-[var(--color-primary-light)] to-[var(--color-primary)]",
+        "bg-[#1D1D1F]",
         "text-white shadow-md",
-        "hover:shadow-glow hover:-translate-y-px",
+        "hover:bg-black hover:shadow-glow hover:-translate-y-px",
         "active:scale-[0.98] active:shadow-sm",
         "focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-[var(--color-bg)]",
       ].join(" "),

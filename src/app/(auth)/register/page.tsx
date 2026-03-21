@@ -172,8 +172,8 @@ export default function RegisterPage() {
           <div
             className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-all duration-300 ${
               step === 1
-                ? "bg-primary/15 text-primary shadow-glow"
-                : "bg-primary text-white"
+                ? "bg-black/[0.08] text-[#1D1D1F] shadow-glow"
+                : "bg-[#1D1D1F] text-white"
             }`}
           >
             {step > 1 ? <Check className="h-4 w-4" /> : "1"}
@@ -191,7 +191,7 @@ export default function RegisterPage() {
         <div className="relative w-16 h-px mx-2 mb-5">
           <div className="absolute inset-0 bg-gray-200 rounded-full" />
           <div
-            className={`absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-500 ease-out ${
+            className={`absolute inset-y-0 left-0 bg-[#1D1D1F] rounded-full transition-all duration-500 ease-out ${
               step > 1 ? "w-full" : "w-0"
             }`}
           />
@@ -202,7 +202,7 @@ export default function RegisterPage() {
           <div
             className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-all duration-300 ${
               step === 2
-                ? "bg-primary/15 text-primary shadow-glow"
+                ? "bg-black/[0.08] text-[#1D1D1F] shadow-glow"
                 : "bg-gray-100 text-[var(--color-text-tertiary)]"
             }`}
           >
@@ -275,7 +275,7 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-glow active:scale-[0.98] transition-all duration-200"
+              className="w-full bg-[#1D1D1F] text-white hover:bg-black hover:shadow-glow active:scale-[0.98] transition-all duration-200"
             >
               Weiter
             </Button>
@@ -307,7 +307,7 @@ export default function RegisterPage() {
                   setLegalForm(e.target.value as LegalFormValue)
                 }
                 required
-                className="flex h-10 w-full rounded-xl bg-white/50 backdrop-blur-sm border border-white/50 px-3 py-2 text-sm text-[var(--color-text)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:shadow-glow disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-xl bg-white/50 backdrop-blur-sm border border-white/50 px-3 py-2 text-sm text-[var(--color-text)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black/20 focus:shadow-glow disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="" disabled>
                   Rechtsform waehlen
@@ -335,7 +335,7 @@ export default function RegisterPage() {
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-glow active:scale-[0.98] transition-all duration-200"
+                className="flex-1 bg-[#1D1D1F] text-white hover:bg-black hover:shadow-glow active:scale-[0.98] transition-all duration-200"
                 disabled={loading}
               >
                 {loading ? "Registrieren..." : "Registrieren"}

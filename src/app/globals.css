@@ -7,16 +7,16 @@
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-bg-hover: rgba(255, 255, 255, 0.85);
   --glass-bg-active: rgba(255, 255, 255, 0.92);
-  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-border: rgba(0, 0, 0, 0.06);
   --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.08);
   --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1);
   --glass-blur: 20px;
 
   /* ARCANA colors */
-  --color-primary: #0D9488;
-  --color-primary-light: #14B8A6;
-  --color-primary-dark: #0F766E;
-  --color-primary-glow: rgba(13, 148, 136, 0.15);
+  --color-primary: #1D1D1F;
+  --color-primary-light: #3A3A3C;
+  --color-primary-dark: #000000;
+  --color-primary-glow: rgba(0, 0, 0, 0.08);
 
   /* Neutral system */
   --color-bg: #F5F5F7;
@@ -48,7 +48,7 @@
   }
 
   ::selection {
-    background: rgba(13, 148, 136, 0.2);
+    background: rgba(0, 0, 0, 0.12);
   }
 }
 

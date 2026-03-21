@@ -355,7 +355,7 @@ export default async function DashboardPage() {
           return (
             <Link key={action.label} href={action.href}>
               <div className="glass glass-hover rounded-2xl p-5 flex flex-col items-center gap-3 text-center cursor-pointer group transition-transform duration-200 hover:scale-[1.02]">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-glow group-hover:shadow-glow-lg transition-shadow duration-200">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-900 text-white shadow-glow group-hover:shadow-glow-lg transition-shadow duration-200">
                   <Icon className="h-5 w-5" />
                 </div>
                 <span className="text-sm font-medium text-text-primary">{action.label}</span>

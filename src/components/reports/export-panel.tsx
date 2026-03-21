@@ -163,7 +163,7 @@ export function ExportPanel() {
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light text-primary">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 text-primary">
                     <Icon className="h-5 w-5" />
                   </div>
                   <Badge variant={option.badgeVariant}>{option.badge}</Badge>

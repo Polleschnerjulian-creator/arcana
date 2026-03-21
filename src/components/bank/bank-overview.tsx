@@ -117,7 +117,7 @@ export function BankOverview({ accounts }: BankOverviewProps) {
                 className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-light">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
                   <div>

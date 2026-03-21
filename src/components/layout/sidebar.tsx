@@ -79,7 +79,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         className={cn(
           "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ease-out min-h-[44px] md:min-h-0",
           isActive
-            ? "bg-[rgba(13,148,136,0.1)] text-primary font-medium shadow-[inset_0_0_0_1px_rgba(13,148,136,0.12)]"
+            ? "bg-black/[0.06] text-[#1D1D1F] font-medium shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
             : "text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.5)] hover:text-[var(--color-text)]",
           collapsed && "md:justify-center md:px-2"
         )}
@@ -109,13 +109,13 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
     <>
       {/* Logo */}
       <div className={cn(
-        "flex h-16 items-center justify-between px-4",
+        "flex h-20 items-center justify-between px-4",
         collapsed && "md:px-2"
       )}>
         {/* Mobile: always show full logo with close button */}
         <div className="md:hidden flex items-center justify-between w-full">
           <Link href="/dashboard" className="flex items-center" onClick={onMobileClose}>
-            <img src="/arcana-logo.png" alt="ARCANA" className="h-7" />
+            <img src="/arcana-logo.png" alt="ARCANA" className="h-9" />
           </Link>
           <button
             onClick={onMobileClose}
@@ -133,9 +133,9 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
             collapsed ? "mx-auto" : "gap-2.5"
           )}>
             {collapsed ? (
-              <img src="/arcana-logo.png" alt="ARCANA" className="h-6 w-6 object-contain object-left" />
+              <img src="/arcana-logo.png" alt="ARCANA" className="h-7 w-7 object-contain object-left" />
             ) : (
-              <img src="/arcana-logo.png" alt="ARCANA" className="h-7" />
+              <img src="/arcana-logo.png" alt="ARCANA" className="h-9" />
             )}
           </Link>
         </div>
@@ -195,7 +195,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           )}
         >
           {/* Gradient initials avatar */}
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-teal-400 text-white text-xs font-semibold shadow-[0_2px_8px_rgba(13,148,136,0.25)]">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white text-xs font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
             {userInitials}
           </div>
           {/* Mobile: always show. Desktop: hide when collapsed */}

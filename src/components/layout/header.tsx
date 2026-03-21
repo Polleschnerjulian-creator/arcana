@@ -93,7 +93,7 @@ export function Header({ breadcrumbs, collapsed, onMobileMenuToggle }: HeaderPro
           <Bell className="h-[18px] w-[18px]" strokeWidth={1.5} />
         </button>
 
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-teal-400 text-white text-xs font-semibold shadow-[0_2px_8px_rgba(13,148,136,0.25)] cursor-pointer transition-transform duration-200 hover:scale-105">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-white text-xs font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2)] cursor-pointer transition-transform duration-200 hover:scale-105">
           {userInitials}
         </div>
       </div>

@@ -26,8 +26,8 @@ export default function NotFound() {
               href="/dashboard"
               className="inline-flex items-center justify-center gap-2 h-11 px-8 text-sm font-medium rounded-2xl text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               style={{
-                background: "linear-gradient(135deg, #0D9488, #0F766E)",
-                boxShadow: "0 0 20px rgba(13, 148, 136, 0.15), 0 2px 8px rgba(0, 0, 0, 0.06)",
+                background: "#1D1D1F",
+                boxShadow: "0 0 20px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06)",
               }}
             >
               <svg

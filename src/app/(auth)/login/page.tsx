@@ -80,7 +80,7 @@ function LoginForm() {
 
         <Button
           type="submit"
-          className="w-full bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-glow active:scale-[0.98] transition-all duration-200"
+          className="w-full bg-[#1D1D1F] text-white hover:bg-black hover:shadow-glow active:scale-[0.98] transition-all duration-200"
           disabled={loading}
         >
           {loading ? "Anmelden..." : "Anmelden"}
