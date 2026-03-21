@@ -1,0 +1,270 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Multi-Tenant Core ────────────────────────────────────────────
+
+model Organization {
+  id                String   @id @default(cuid())
+  name              String
+  legalForm         String   // EU, GmbH, UG, AG, OHG, KG, GbR, FreiBeruf
+  taxId             String?  // Steuernummer
+  ustId             String?  // USt-IdNr.
+  street            String?
+  city              String?
+  zip               String?
+  country           String   @default("DE")
+  chartOfAccounts   String   @default("SKR03") // SKR03 | SKR04
+  accountingMethod  String   @default("EUR")   // EUR | BILANZ
+  fiscalYearStart   Int      @default(1) // Month (1-12)
+  settings          String?  // JSON string for preferences
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  users             User[]
+  accounts          Account[]
+  transactions      Transaction[]
+  documents         Document[]
+  bankAccounts      BankAccount[]
+  taxPeriods        TaxPeriod[]
+  auditLogs         AuditLog[]
+  invoices          Invoice[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String
+  passwordHash   String
+  role           String   @default("OWNER") // OWNER | ADMIN | BOOKKEEPER | VIEWER
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  bookedTransactions  Transaction[] @relation("BookedBy")
+  uploadedDocuments   Document[]    @relation("UploadedBy")
+  auditLogs      AuditLog[]
+
+  @@index([organizationId])
+}
+
+// ─── Kontenrahmen (Chart of Accounts) ─────────────────────────────
+
+model Account {
+  id             String   @id @default(cuid())
+  organizationId String
+  number         String   // e.g., "1200" for Bank
+  name           String   // e.g., "Bank"
+  type           String   // ASSET | LIABILITY | EQUITY | REVENUE | EXPENSE
+  category       String   // ANLAGE | UMLAUF | EIGENKAPITAL | ERLOES | AUFWAND
+  parentId       String?
+  isSystem       Boolean  @default(false) // true for standard SKR accounts
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  parent         Account?     @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children       Account[]    @relation("AccountHierarchy")
+
+  transactionLines TransactionLine[] @relation("LineAccount")
+  taxLines         TransactionLine[] @relation("TaxAccount")
+  bankAccount    BankAccount?
+
+  @@unique([organizationId, number])
+  @@index([organizationId])
+  @@index([organizationId, type])
+}
+
+// ─── Buchungssatz (Core Transaction) ──────────────────────────────
+
+model Transaction {
+  id              String    @id @default(cuid())
+  organizationId  String
+  date            DateTime  // Buchungsdatum
+  description     String    // Buchungstext
+  reference       String?   // Belegnummer
+  documentId      String?
+  status          String    @default("DRAFT") // DRAFT | BOOKED | CANCELLED
+  bookedAt        DateTime? // Festschreibung — immutable after set
+  bookedById      String?
+  cancelledById   String?   @unique // References the Stornobuchung
+  source          String    @default("MANUAL") // MANUAL | AI_SUGGESTED | BANK_IMPORT | API
+  aiConfidence    Float?    // 0-1, null if manual
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  document        Document?    @relation(fields: [documentId], references: [id])
+  bookedBy        User?        @relation("BookedBy", fields: [bookedById], references: [id])
+  cancelledBy     Transaction? @relation("StornoRef", fields: [cancelledById], references: [id])
+  stornoOf        Transaction? @relation("StornoRef")
+  lines           TransactionLine[]
+  bankTransactions BankTransaction[]
+  invoiceLink     Invoice?     @relation("InvoiceTransaction")
+
+  @@index([organizationId])
+  @@index([organizationId, date])
+  @@index([organizationId, status])
+  @@index([documentId])
+}
+
+model TransactionLine {
+  id              String  @id @default(cuid())
+  transactionId   String
+  accountId       String
+  debit           Decimal @default(0) // Soll
+  credit          Decimal @default(0) // Haben
+  taxRate         Float?  // 0, 7, 19, null
+  taxAccountId    String?
+  note            String?
+
+  transaction     Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  account         Account     @relation("LineAccount", fields: [accountId], references: [id])
+  taxAccount      Account?    @relation("TaxAccount", fields: [taxAccountId], references: [id])
+
+  @@index([transactionId])
+  @@index([accountId])
+}
+
+// ─── Belege (Documents) ───────────────────────────────────────────
+
+model Document {
+  id              String   @id @default(cuid())
+  organizationId  String
+  fileName        String
+  mimeType        String
+  fileSize        Int
+  storagePath     String   // Local path or R2 key
+  sha256Hash      String   // GoBD: computed at upload
+  uploadedAt      DateTime @default(now())
+  uploadedById    String
+  ocrText         String?  // Raw OCR output
+  ocrStatus       String   @default("PENDING") // PENDING | PROCESSING | DONE | FAILED
+  aiExtraction    String?  // JSON: { vendor, amount, taxRate, date, invoiceNumber, lineItems[] }
+  type            String   @default("OTHER") // INCOMING_INVOICE | OUTGOING_INVOICE | RECEIPT | BANK_STATEMENT | OTHER
+
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  uploadedBy      User          @relation("UploadedBy", fields: [uploadedById], references: [id])
+  transactions    Transaction[]
+
+  @@index([organizationId])
+  @@index([sha256Hash])
+}
+
+// ─── Bank ─────────────────────────────────────────────────────────
+
+model BankAccount {
+  id              String    @id @default(cuid())
+  organizationId  String
+  name            String
+  iban            String?
+  bic             String?
+  accountId       String    @unique // Linked Konto (e.g., 1200)
+  lastImportAt    DateTime?
+  createdAt       DateTime  @default(now())
+
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  account         Account          @relation(fields: [accountId], references: [id])
+  bankTransactions BankTransaction[]
+
+  @@index([organizationId])
+}
+
+model BankTransaction {
+  id                    String   @id @default(cuid())
+  bankAccountId         String
+  date                  DateTime
+  amount                Decimal
+  description           String
+  counterpartName       String?
+  counterpartIban       String?
+  importBatch           String   // Groups transactions from same import
+  matchedTransactionId  String?
+  matchConfidence       Float?   // 0-1
+  matchStatus           String   @default("UNMATCHED") // UNMATCHED | AI_SUGGESTED | CONFIRMED | MANUAL
+  createdAt             DateTime @default(now())
+
+  bankAccount           BankAccount  @relation(fields: [bankAccountId], references: [id])
+  matchedTransaction    Transaction? @relation(fields: [matchedTransactionId], references: [id])
+
+  @@index([bankAccountId])
+  @@index([matchStatus])
+}
+
+// ─── Steuer (Tax) ─────────────────────────────────────────────────
+
+model TaxPeriod {
+  id              String    @id @default(cuid())
+  organizationId  String
+  type            String    // USTVA_MONTHLY | USTVA_QUARTERLY | ANNUAL
+  periodStart     DateTime
+  periodEnd       DateTime
+  ustAmount       Decimal   @default(0) // Umsatzsteuer
+  vstAmount       Decimal   @default(0) // Vorsteuer
+  payloadAmount   Decimal   @default(0) // Zahllast
+  status          String    @default("OPEN") // OPEN | CALCULATED | FILED
+  filedAt         DateTime?
+  createdAt       DateTime  @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([organizationId, type, periodStart])
+}
+
+// ─── GoBD Audit Trail ─────────────────────────────────────────────
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  organizationId  String
+  timestamp       DateTime @default(now())
+  userId          String
+  action          String   // CREATE | UPDATE | BOOK | CANCEL | DELETE | EXPORT | LOGIN
+  entityType      String   // TRANSACTION | DOCUMENT | ACCOUNT | etc.
+  entityId        String
+  previousState   String?  // JSON snapshot
+  newState        String?  // JSON snapshot
+  hashChain       String   // SHA-256(previousHash + currentData)
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  user            User         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, timestamp])
+}
+
+// ─── Ausgangsrechnungen (Outgoing Invoices) ───────────────────────
+
+model Invoice {
+  id              String    @id @default(cuid())
+  organizationId  String
+  invoiceNumber   String    // Auto-generated, sequential
+  customerId      String?
+  customerName    String
+  customerAddress String?
+  issueDate       DateTime
+  dueDate         DateTime
+  status          String    @default("DRAFT") // DRAFT | SENT | PAID | OVERDUE | CANCELLED
+  lineItems       String    // JSON array
+  subtotal        Decimal
+  taxAmount       Decimal
+  total           Decimal
+  transactionId   String?   @unique // Auto-created on send
+  pdfPath         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  transaction     Transaction? @relation("InvoiceTransaction", fields: [transactionId], references: [id])
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId])
+  @@index([organizationId, status])
+}

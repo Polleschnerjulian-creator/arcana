@@ -2,22 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* ARCANA Design System Colors */
+    --color-primary: #0D9488;
+    --color-primary-hover: #0F766E;
+    --color-primary-light: #CCFBF1;
+    --color-primary-50: #F0FDFA;
+
+    --color-background: #FAFAF9;
+    --color-surface: #FFFFFF;
+
+    --color-text-primary: #1C1917;
+    --color-text-secondary: #78716C;
+    --color-text-muted: #A8A29E;
+
+    --color-border: #E7E5E4;
+    --color-border-hover: #D6D3D1;
+
+    --color-success: #16A34A;
+    --color-success-light: #DCFCE7;
+    --color-warning: #D97706;
+    --color-warning-light: #FEF3C7;
+    --color-danger: #DC2626;
+    --color-danger-light: #FEE2E2;
+    --color-info: #2563EB;
+    --color-info-light: #DBEAFE;
+
+    /* Spacing */
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 72px;
+    --header-height: 56px;
+  }
+
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    color: var(--color-text-primary);
+    background-color: var(--color-background);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Amount / Number display */
+  .amount {
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  .amount-haben {
+    color: var(--color-success);
+  }
+
+  .amount-soll {
+    color: var(--color-danger);
+  }
 }
 
 @layer utilities {
