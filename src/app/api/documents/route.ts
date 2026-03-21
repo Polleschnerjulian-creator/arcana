@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { saveDocument } from "@/lib/documents/storage";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
+import { runDocumentPipeline } from "@/lib/documents/auto-pipeline";
+
+export const maxDuration = 60;
 
 // ─── Magic Bytes Validation ─────────────────────────────────────
 
@@ -245,6 +248,13 @@ export async function POST(request: NextRequest) {
     } catch {
       // Audit-Fehler unterbricht den Hauptablauf nicht
     }
+
+    // Fire-and-forget: run pipeline asynchronously
+    runDocumentPipeline(document.id, session.user.organizationId).catch(
+      (err) => {
+        console.error("[Auto-Pipeline] Failed:", err);
+      }
+    );
 
     return NextResponse.json(
       { success: true, data: document },

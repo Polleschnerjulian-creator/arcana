@@ -81,6 +81,7 @@ export function ImportForm({ bankAccounts }: ImportFormProps) {
   const [importResult, setImportResult] = useState<{
     success: boolean;
     count: number;
+    autoMatched: number;
     message: string;
   } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -179,10 +180,19 @@ export function ImportForm({ bankAccounts }: ImportFormProps) {
         return;
       }
 
+      const importedCount = data.data?.imported || data.data?.importedCount || 0;
+      const autoMatchedCount = data.data?.autoMatched || 0;
+
+      const message =
+        autoMatchedCount > 0
+          ? `${importedCount} Ums\u00e4tze importiert, davon ${autoMatchedCount} automatisch zugeordnet.`
+          : `${importedCount} Ums\u00e4tze erfolgreich importiert.`;
+
       setImportResult({
         success: true,
-        count: data.data?.importedCount || 0,
-        message: `${data.data?.importedCount || 0} Umsätze erfolgreich importiert.`,
+        count: importedCount,
+        autoMatched: autoMatchedCount,
+        message,
       });
     } catch {
       setImportError("Netzwerkfehler. Bitte versuchen Sie es erneut.");

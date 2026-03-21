@@ -5,7 +5,9 @@ import { prisma } from "@/lib/db";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
 import { parseCSV, getTemplateById } from "@/lib/bank/csv-parser";
 import { parseMT940 } from "@/lib/bank/mt940-parser";
+import { findPotentialMatches } from "@/lib/bank/matching";
 import type { ParsedBankTransaction } from "@/lib/bank/csv-parser";
+import type { OpenItem } from "@/lib/bank/matching";
 
 // ─── POST: Import Bank Transactions ──────────────────────────────
 
@@ -173,11 +175,96 @@ export async function POST(request: NextRequest) {
       // Audit-Modul darf den Import nicht blockieren
     }
 
+    // ─── Auto-Matching ─────────────────────────────────────────────
+    let autoMatched = 0;
+
+    try {
+      // Fetch ALL unmatched bank transactions for this org (not just this batch)
+      const unmatchedBankTxs = await prisma.bankTransaction.findMany({
+        where: {
+          matchStatus: "UNMATCHED",
+          bankAccount: { organizationId: session.user.organizationId },
+        },
+      });
+
+      // Fetch all unlinked BOOKED transactions as potential match targets
+      const bookedTransactions = await prisma.transaction.findMany({
+        where: {
+          organizationId: session.user.organizationId,
+          status: "BOOKED",
+          bankTransactions: { none: {} },
+        },
+        include: {
+          lines: { include: { account: true } },
+        },
+      });
+
+      // Build open items from booked transactions
+      const openItems: OpenItem[] = bookedTransactions.map((tx) => {
+        // Calculate total amount from transaction lines
+        const totalDebit = tx.lines.reduce(
+          (sum, l) => sum + Number(l.debit),
+          0
+        );
+        const totalCredit = tx.lines.reduce(
+          (sum, l) => sum + Number(l.credit),
+          0
+        );
+
+        return {
+          id: tx.id,
+          type: "transaction" as const,
+          amount: totalDebit > 0 ? totalDebit : -totalCredit,
+          date: tx.date,
+          description: tx.description,
+          counterpartName: tx.reference || undefined,
+        };
+      });
+
+      if (openItems.length > 0) {
+        for (const bankTx of unmatchedBankTxs) {
+          const matches = findPotentialMatches(
+            {
+              amount: Number(bankTx.amount),
+              date: bankTx.date,
+              counterpartName: bankTx.counterpartName || undefined,
+            },
+            openItems
+          );
+
+          // Auto-match if best match has confidence > 0.85
+          if (matches.length > 0 && matches[0].confidence > 0.85) {
+            await prisma.bankTransaction.update({
+              where: { id: bankTx.id },
+              data: {
+                matchedTransactionId: matches[0].openItemId,
+                matchConfidence: matches[0].confidence,
+                matchStatus: "AI_SUGGESTED",
+              },
+            });
+            autoMatched++;
+
+            // Remove matched item from open items to prevent double-matching
+            const matchedIdx = openItems.findIndex(
+              (item) => item.id === matches[0].openItemId
+            );
+            if (matchedIdx !== -1) {
+              openItems.splice(matchedIdx, 1);
+            }
+          }
+        }
+      }
+    } catch (matchErr) {
+      console.error("[Bank Import] Auto-matching failed:", matchErr);
+      // Auto-matching failure does not block the import response
+    }
+
     return NextResponse.json(
       {
         success: true,
         data: {
           imported: created.length,
+          autoMatched,
           batch: importBatch,
         },
       },

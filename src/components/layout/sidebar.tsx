@@ -22,12 +22,53 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// ─── Notification Counts ────────────────────────────────────────
+
+interface NotificationCounts {
+  pendingDocuments: number;
+  failedDocuments: number;
+  unmatchedBankTransactions: number;
+  overdueInvoices: number;
+  draftTransactions: number;
+}
+
+function useNotificationCounts() {
+  const [counts, setCounts] = React.useState<NotificationCounts | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function fetchCounts() {
+      try {
+        const res = await fetch("/api/notifications");
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && json.success) {
+          setCounts(json.data);
+        }
+      } catch {
+        // Silently fail — badges are non-critical
+      }
+    }
+
+    fetchCounts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return counts;
+}
+
+// ─── Navigation Items ───────────────────────────────────────────
+
 const mainNavigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Buchungen", href: "/transactions", icon: ArrowLeftRight },
-  { name: "Belege", href: "/documents", icon: FileText },
-  { name: "Bank", href: "/bank", icon: Building2 },
-  { name: "Rechnungen", href: "/invoices", icon: Receipt },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, badgeKey: null },
+  { name: "Buchungen", href: "/transactions", icon: ArrowLeftRight, badgeKey: "draftTransactions" as const },
+  { name: "Belege", href: "/documents", icon: FileText, badgeKey: "documents" as const },
+  { name: "Bank", href: "/bank", icon: Building2, badgeKey: "unmatchedBankTransactions" as const },
+  { name: "Rechnungen", href: "/invoices", icon: Receipt, badgeKey: "overdueInvoices" as const },
 ];
 
 const secondaryNavigation = [
@@ -52,6 +93,19 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   const pathname = usePathname();
   const { data: session } = useSession();
   const prevPathnameRef = React.useRef(pathname);
+  const notificationCounts = useNotificationCounts();
+
+  // Compute badge counts for each nav item
+  function getBadgeCount(badgeKey: string | null): number {
+    if (!badgeKey || !notificationCounts) return 0;
+    if (badgeKey === "documents") {
+      return notificationCounts.pendingDocuments + notificationCounts.failedDocuments;
+    }
+    if (badgeKey === "draftTransactions") return notificationCounts.draftTransactions;
+    if (badgeKey === "unmatchedBankTransactions") return notificationCounts.unmatchedBankTransactions;
+    if (badgeKey === "overdueInvoices") return notificationCounts.overdueInvoices;
+    return 0;
+  }
 
   // Close mobile sidebar on route change
   React.useEffect(() => {
@@ -70,12 +124,13 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         .slice(0, 2)
     : "??";
 
-  function renderNavItem(item: { name: string; href: string; icon: LucideIcon }) {
+  function renderNavItem(item: { name: string; href: string; icon: LucideIcon; badgeKey?: string | null }) {
     // For /settings specifically, only match exact path (not /settings/integrations)
     const isActive = item.href === "/settings"
       ? pathname === item.href
       : pathname === item.href || pathname?.startsWith(item.href + "/");
     const Icon = item.icon;
+    const badgeCount = getBadgeCount(item.badgeKey ?? null);
 
     return (
       <Link
@@ -90,22 +145,39 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         )}
         title={collapsed ? item.name : undefined}
       >
-        <Icon
-          className={cn(
-            "h-5 w-5 flex-shrink-0 transition-colors duration-200",
-            isActive ? "text-primary" : "text-[var(--color-text-tertiary)] group-hover:text-[var(--color-text-secondary)]"
+        <div className="relative flex-shrink-0">
+          <Icon
+            className={cn(
+              "h-5 w-5 transition-colors duration-200",
+              isActive ? "text-primary" : "text-[var(--color-text-tertiary)] group-hover:text-[var(--color-text-secondary)]"
+            )}
+            strokeWidth={1.5}
+          />
+          {/* Collapsed badge dot on icon */}
+          {collapsed && badgeCount > 0 && (
+            <span className="absolute -top-1 -right-1 hidden md:flex h-2 w-2 rounded-full bg-red-500" />
           )}
-          strokeWidth={1.5}
-        />
+        </div>
         {/* Mobile: always show label. Desktop: hide when collapsed */}
         <span
           className={cn(
-            "transition-opacity duration-200",
+            "flex-1 transition-opacity duration-200",
             collapsed && "md:hidden"
           )}
         >
           {item.name}
         </span>
+        {/* Badge pill — visible when not collapsed */}
+        {badgeCount > 0 && (
+          <span
+            className={cn(
+              "inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-semibold leading-none min-w-[18px] h-[18px] px-1",
+              collapsed && "md:hidden"
+            )}
+          >
+            {badgeCount > 99 ? "99+" : badgeCount}
+          </span>
+        )}
       </Link>
     );
   }

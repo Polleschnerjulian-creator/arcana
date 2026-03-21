@@ -18,6 +18,7 @@ import {
   ChevronUp,
   Sparkles,
   X,
+  Loader2,
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -65,22 +66,29 @@ const TYPE_VARIANTS: Record<
   OTHER: "default",
 };
 
-const OCR_LABELS: Record<DocumentItem["ocrStatus"], string> = {
-  PENDING: "Ausstehend",
-  PROCESSING: "Verarbeitung",
-  DONE: "Fertig",
-  FAILED: "Fehlgeschlagen",
-};
+function getOcrLabel(doc: DocumentItem): string {
+  if (doc.ocrStatus === "PENDING") return "Wird verarbeitet...";
+  if (doc.ocrStatus === "PROCESSING") return "OCR l\u00e4uft...";
+  if (doc.ocrStatus === "DONE" && doc.aiExtraction) return "Verarbeitet";
+  if (doc.ocrStatus === "DONE") return "OCR fertig";
+  if (doc.ocrStatus === "FAILED") return "Fehler";
+  return doc.ocrStatus;
+}
 
-const OCR_VARIANTS: Record<
-  DocumentItem["ocrStatus"],
-  "default" | "success" | "warning" | "danger" | "info"
-> = {
-  PENDING: "warning",
-  PROCESSING: "info",
-  DONE: "success",
-  FAILED: "danger",
-};
+function getOcrVariant(
+  doc: DocumentItem
+): "default" | "success" | "warning" | "danger" | "info" {
+  if (doc.ocrStatus === "PENDING") return "warning";
+  if (doc.ocrStatus === "PROCESSING") return "info";
+  if (doc.ocrStatus === "DONE" && doc.aiExtraction) return "success";
+  if (doc.ocrStatus === "DONE") return "info";
+  if (doc.ocrStatus === "FAILED") return "danger";
+  return "default";
+}
+
+function isOcrInProgress(doc: DocumentItem): boolean {
+  return doc.ocrStatus === "PENDING" || doc.ocrStatus === "PROCESSING";
+}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -256,8 +264,11 @@ export function DocumentList({ documents }: DocumentListProps) {
                   <Badge variant={TYPE_VARIANTS[doc.type]}>
                     {TYPE_LABELS[doc.type]}
                   </Badge>
-                  <Badge variant={OCR_VARIANTS[doc.ocrStatus]}>
-                    {OCR_LABELS[doc.ocrStatus]}
+                  <Badge variant={getOcrVariant(doc)}>
+                    {isOcrInProgress(doc) && (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    )}
+                    {getOcrLabel(doc)}
                   </Badge>
                   {doc.aiExtraction && (
                     <Badge variant="success">
@@ -417,8 +428,11 @@ export function DocumentList({ documents }: DocumentListProps) {
                     </td>
                     <td className="p-3">
                       <div className="flex items-center gap-1.5">
-                        <Badge variant={OCR_VARIANTS[doc.ocrStatus]}>
-                          {OCR_LABELS[doc.ocrStatus]}
+                        <Badge variant={getOcrVariant(doc)}>
+                          {isOcrInProgress(doc) && (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          )}
+                          {getOcrLabel(doc)}
                         </Badge>
                         {doc.aiExtraction && (
                           <Badge variant="success">
