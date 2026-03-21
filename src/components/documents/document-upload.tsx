@@ -101,11 +101,18 @@ export function DocumentUpload() {
           throw new Error(data.error || "Upload fehlgeschlagen");
         }
 
+        const data = await res.json();
+
         setFiles((prev) =>
           prev.map((f, idx) =>
             idx === i ? { ...f, status: "done" } : f
           )
         );
+
+        // Trigger pipeline in separate request (Vercel needs its own function)
+        if (data.data?.processUrl) {
+          fetch(data.data.processUrl, { method: "POST" }).catch(() => {});
+        }
       } catch (err) {
         setFiles((prev) =>
           prev.map((f, idx) =>

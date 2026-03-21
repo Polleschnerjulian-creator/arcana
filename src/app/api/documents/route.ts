@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { saveDocument } from "@/lib/documents/storage";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
-import { runDocumentPipeline } from "@/lib/documents/auto-pipeline";
+
 import { formatDate } from "@/lib/utils";
 
 export const maxDuration = 60;
@@ -268,15 +268,12 @@ export async function POST(request: NextRequest) {
       // Audit-Fehler unterbricht den Hauptablauf nicht
     }
 
-    // Fire-and-forget: run pipeline asynchronously
-    runDocumentPipeline(document.id, session.user.organizationId).catch(
-      (err) => {
-        console.error("[Auto-Pipeline] Failed:", err);
-      }
-    );
+    // Trigger pipeline as separate request from client
+    // (fire-and-forget doesn't work on Vercel — function dies after response)
+    // Client should call POST /api/documents/[id]/process after upload
 
     return NextResponse.json(
-      { success: true, data: document },
+      { success: true, data: { ...document, processUrl: `/api/documents/${document.id}/process` } },
       { status: 201 }
     );
   } catch (error) {
