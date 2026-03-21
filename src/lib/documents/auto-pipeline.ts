@@ -64,28 +64,13 @@ export async function runDocumentPipeline(
       const arrayBuffer = await response.arrayBuffer();
       const pdfBuffer = new Uint8Array(arrayBuffer);
 
-      // Use pdfjs-dist to extract text directly from PDF
-      // This works better than OCR for digital PDFs (most invoices)
-      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      const doc = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
-
-      let extractedText = "";
-      const numPages = doc.numPages;
-
-      // Extract text from all pages (up to 10 pages for performance)
-      const maxPages = Math.min(numPages, 10);
-      for (let i = 1; i <= maxPages; i++) {
-        const page = await doc.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: Record<string, unknown>) =>
-            "str" in item ? (item.str as string) : ""
-          )
-          .join(" ");
-        extractedText += pageText + "\n";
-      }
-
-      extractedText = extractedText.trim();
+      // Use pdf-parse to extract text directly from PDF
+      // Works on Vercel Serverless (no Canvas/Worker dependencies)
+      // pdf-parse v1 — simple, serverless-compatible
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
+      const pdfData = await pdfParse(Buffer.from(pdfBuffer));
+      let extractedText = (pdfData.text || "").trim();
 
       // Check if we got substantial text (digital PDF)
       if (extractedText.length > 50) {
@@ -100,7 +85,7 @@ export async function runDocumentPipeline(
         });
 
         console.log(
-          `[Auto-Pipeline] PDF text extraction completed for document ${documentId} (${extractedText.length} chars, ${numPages} pages)`
+          `[Auto-Pipeline] PDF text extraction completed for document ${documentId} (${extractedText.length} chars)`
         );
       } else {
         // Scanned PDF with no embedded text
