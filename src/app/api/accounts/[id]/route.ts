@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+
+const updateAccountSchema = z.object({
+  name: z.string().min(2, "Name muss mindestens 2 Zeichen lang sein.").max(120, "Name darf maximal 120 Zeichen lang sein.").optional(),
+  isActive: z.boolean().optional(),
+});
 
 export async function PATCH(
   request: Request,
@@ -44,17 +50,27 @@ export async function PATCH(
 
     const body = await request.json();
 
-    const updateData: Record<string, unknown> = {};
-
-    if (typeof body.isActive === "boolean") {
-      updateData.isActive = body.isActive;
+    const parsed = updateAccountSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Validierungsfehler.",
+          details: parsed.error.issues.map((issue) => ({
+            field: issue.path.join("."),
+            message: issue.message,
+          })),
+        },
+        { status: 400 }
+      );
     }
 
-    if (typeof body.name === "string" && body.name.length >= 2) {
-      updateData.name = body.name;
-    }
+    const updateData = parsed.data;
 
-    if (Object.keys(updateData).length === 0) {
+    if (
+      updateData.name === undefined &&
+      updateData.isActive === undefined
+    ) {
       return NextResponse.json(
         { success: false, error: "Keine gültigen Felder zum Aktualisieren." },
         { status: 400 }

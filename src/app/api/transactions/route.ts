@@ -58,8 +58,19 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
-    // Date range filter
+    // Date range filter — validate format strictly before parsing
     if (from || to) {
+      const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+      if ((from && !DATE_REGEX.test(from)) || (to && !DATE_REGEX.test(to))) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Ungültiges Datumsformat. Erwartet: YYYY-MM-DD",
+          },
+          { status: 400 }
+        );
+      }
+
       const dateFilter: Record<string, Date> = {};
       if (from) {
         dateFilter.gte = new Date(from);

@@ -49,15 +49,6 @@ export default function NotFound() {
           </div>
         </div>
 
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-12px); }
-          }
-          .animate-float {
-            animation: float 3s ease-in-out infinite;
-          }
-        `}} />
       </body>
     </html>
   );

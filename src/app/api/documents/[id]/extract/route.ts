@@ -52,16 +52,11 @@ export async function POST(
     const extraction = await extractDocumentData(document.ocrText);
 
     if (!extraction) {
-      // Distinguish between missing API key and actual failure
-      const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+      // Log actual reason server-side only — never reveal config state to client
+      console.error("[AI Extract]", "extraction returned null");
       return NextResponse.json(
-        {
-          success: false,
-          error: hasApiKey
-            ? "KI-Extraktion fehlgeschlagen. Bitte versuchen Sie es erneut."
-            : "KI-Extraktion nicht verfügbar. Bitte ANTHROPIC_API_KEY konfigurieren.",
-        },
-        { status: hasApiKey ? 500 : 503 }
+        { success: false, error: "KI-Extraktion ist derzeit nicht verfügbar." },
+        { status: 503 }
       );
     }
 

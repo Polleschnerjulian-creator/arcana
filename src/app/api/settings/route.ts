@@ -163,6 +163,15 @@ export async function PATCH(request: Request) {
       },
     });
 
+    // Nur sichere Felder loggen (taxId, ustId, Adresse bewusst ausgelassen)
+    const safeFields = (org: Record<string, unknown>) => ({
+      name: org.name,
+      legalForm: org.legalForm,
+      chartOfAccounts: org.chartOfAccounts,
+      accountingMethod: org.accountingMethod,
+      fiscalYearStart: org.fiscalYearStart,
+    });
+
     // Create audit entry
     await createAuditEntry({
       organizationId: session.user.organizationId,
@@ -170,8 +179,10 @@ export async function PATCH(request: Request) {
       action: "UPDATE",
       entityType: "ORGANIZATION",
       entityId: session.user.organizationId,
-      previousState: previousOrg as unknown as Record<string, unknown>,
-      newState: updated as unknown as Record<string, unknown>,
+      previousState: previousOrg
+        ? safeFields(previousOrg as unknown as Record<string, unknown>)
+        : null,
+      newState: safeFields(updated as unknown as Record<string, unknown>),
     });
 
     return NextResponse.json({

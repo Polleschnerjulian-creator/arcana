@@ -89,6 +89,20 @@ export async function POST(
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+
+      // Check Content-Length before consuming the body to prevent memory exhaustion
+      const contentLength = Number(response.headers.get("content-length") || 0);
+      if (contentLength > 10 * 1024 * 1024) { // 10 MB
+        await prisma.document.update({
+          where: { id },
+          data: { ocrStatus: "FAILED" },
+        });
+        return NextResponse.json(
+          { success: false, error: "Datei zu groß für OCR-Verarbeitung (max. 10 MB)." },
+          { status: 413 }
+        );
+      }
+
       const arrayBuffer = await response.arrayBuffer();
       imageBuffer = Buffer.from(arrayBuffer);
     } catch (fetchError) {

@@ -87,53 +87,62 @@ export async function createAuditEntry(
       newState,
     } = params;
 
-    // Letzten Audit-Log-Eintrag dieser Organisation abrufen
-    const lastEntry = await prisma.auditLog.findFirst({
-      where: { organizationId },
-      orderBy: { timestamp: "desc" },
-      select: { hashChain: true },
-    });
-
-    const timestamp = new Date();
-
     const serializedNewState = newState ? JSON.stringify(newState) : null;
     const serializedPreviousState = previousState
       ? JSON.stringify(previousState)
       : null;
 
-    // Hash-Kette berechnen
-    const hashChain = computeHashChain(
-      lastEntry?.hashChain ?? null,
-      {
-        action,
-        entityType,
-        entityId,
-        timestamp: timestamp.toISOString(),
-        newState: serializedNewState,
-      }
-    );
+    // Atomare Transaktion: findFirst + create verhindert Race Conditions
+    const entry = await prisma.$transaction(async (tx) => {
+      // Letzten Audit-Log-Eintrag dieser Organisation abrufen
+      const lastEntry = await tx.auditLog.findFirst({
+        where: { organizationId },
+        orderBy: { timestamp: "desc" },
+        select: { hashChain: true },
+      });
 
-    // Audit-Log-Eintrag erstellen
-    const entry = await prisma.auditLog.create({
-      data: {
-        organizationId,
-        userId,
-        action,
-        entityType,
-        entityId,
-        previousState: serializedPreviousState,
-        newState: serializedNewState,
-        hashChain,
-        timestamp,
-      },
+      const timestamp = new Date();
+
+      // Hash-Kette berechnen
+      const hashChain = computeHashChain(
+        lastEntry?.hashChain ?? null,
+        {
+          action,
+          entityType,
+          entityId,
+          timestamp: timestamp.toISOString(),
+          newState: serializedNewState,
+        }
+      );
+
+      // Audit-Log-Eintrag erstellen
+      return tx.auditLog.create({
+        data: {
+          organizationId,
+          userId,
+          action,
+          entityType,
+          entityId,
+          previousState: serializedPreviousState,
+          newState: serializedNewState,
+          hashChain,
+          timestamp,
+        },
+      });
     });
 
     return entry;
   } catch (error) {
-    console.error(
-      "[AuditLog] Fehler beim Erstellen des Audit-Eintrags:",
-      error
-    );
+    // [GoBD AUDIT FAILURE] — Prefix für Log-Drain-Suche und Alerting.
+    // In Produktion sollte dieser Fehler einen Alert auslösen,
+    // da fehlgeschlagene Audit-Einträge die GoBD-Konformität gefährden.
+    console.error("[GoBD AUDIT FAILURE]", {
+      organizationId: params.organizationId,
+      action: params.action,
+      entityType: params.entityType,
+      entityId: params.entityId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return undefined;
   }
 }

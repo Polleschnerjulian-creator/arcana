@@ -34,6 +34,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Dateigröße prüfen (max. 5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: "Datei zu groß. Maximale Größe: 5 MB." },
+        { status: 413 }
+      );
+    }
+
     if (!bankAccountId) {
       return NextResponse.json(
         { success: false, error: "Bankkonto-ID ist erforderlich." },

@@ -5,6 +5,53 @@ import { prisma } from "@/lib/db";
 import { saveDocument } from "@/lib/documents/storage";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
 
+// ─── Magic Bytes Validation ─────────────────────────────────────
+
+function validateMagicBytes(buffer: Buffer): boolean {
+  if (buffer.length < 12) return false;
+
+  // PDF: starts with %PDF (hex: 25 50 44 46)
+  if (
+    buffer[0] === 0x25 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x44 &&
+    buffer[3] === 0x46
+  ) {
+    return true;
+  }
+
+  // JPEG: starts with FF D8 FF
+  if (
+    buffer[0] === 0xff &&
+    buffer[1] === 0xd8 &&
+    buffer[2] === 0xff
+  ) {
+    return true;
+  }
+
+  // PNG: starts with 89 50 4E 47
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
+    return true;
+  }
+
+  // WebP: bytes 8-11 are "WEBP"
+  if (
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 // ─── Constants ──────────────────────────────────────────────────
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -139,6 +186,18 @@ export async function POST(request: NextRequest) {
     // Read file as buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    // Validate magic bytes (defense against spoofed MIME headers)
+    if (!validateMagicBytes(buffer)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Ungültiges Dateiformat. Nur PDF, JPG, PNG und WebP erlaubt.",
+        },
+        { status: 400 }
+      );
+    }
 
     // Save to local storage
     const { storagePath, sha256Hash } = await saveDocument(

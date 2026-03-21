@@ -32,7 +32,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate date format
+    // Validate date format with strict regex before parsing
+    const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+    if (!DATE_REGEX.test(fromParam) || !DATE_REGEX.test(toParam)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Ungültiges Datumsformat. Erwartet: YYYY-MM-DD",
+        },
+        { status: 400 }
+      );
+    }
+
     const from = new Date(fromParam);
     const to = new Date(toParam);
 
