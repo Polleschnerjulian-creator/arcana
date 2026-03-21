@@ -6,6 +6,7 @@ import {
   generateInvoiceHTML,
   type InvoiceData,
   type InvoiceLineItem,
+  type InvoiceSettings,
   type OrgData,
 } from "@/lib/invoices/pdf";
 
@@ -40,6 +41,7 @@ export async function GET(
             zip: true,
             ustId: true,
             taxId: true,
+            settings: true,
           },
         },
       },
@@ -74,6 +76,18 @@ export async function GET(
       total,
     };
 
+    // Parse invoice settings from org settings JSON
+    let invoiceSettings: InvoiceSettings = {};
+    const orgSettings = (invoice.organization as { settings?: string | null }).settings;
+    if (orgSettings) {
+      try {
+        const parsed = JSON.parse(orgSettings);
+        invoiceSettings = parsed.invoice || {};
+      } catch {
+        // Corrupted JSON — use defaults
+      }
+    }
+
     const orgData: OrgData = {
       name: invoice.organization.name,
       street: invoice.organization.street || undefined,
@@ -81,6 +95,7 @@ export async function GET(
       zip: invoice.organization.zip || undefined,
       ustId: invoice.organization.ustId || undefined,
       taxId: invoice.organization.taxId || undefined,
+      invoiceSettings,
     };
 
     const html = generateInvoiceHTML(invoiceData, orgData);

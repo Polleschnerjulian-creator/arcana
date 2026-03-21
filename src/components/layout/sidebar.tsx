@@ -17,6 +17,7 @@ import {
   Plug,
   Repeat,
   ShoppingBag,
+  Palette,
   ChevronLeft,
   LogOut,
   X,
@@ -81,6 +82,7 @@ const secondaryNavigation = [
 
 const settingsNavigation = [
   { name: "Einstellungen", href: "/settings", icon: Settings },
+  { name: "Rechnungsdesign", href: "/settings/invoice-design", icon: Palette },
   { name: "Dauerauftraege", href: "/settings/recurring", icon: Repeat },
   { name: "Integrationen", href: "/settings/integrations", icon: Plug },
   { name: "Shopify", href: "/settings/shopify", icon: ShoppingBag },
