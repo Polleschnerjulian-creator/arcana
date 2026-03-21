@@ -33,6 +33,8 @@ model Organization {
   taxPeriods        TaxPeriod[]
   auditLogs         AuditLog[]
   invoices          Invoice[]
+  apiKeys           ApiKey[]
+  webhookLogs       WebhookLog[]
 }
 
 model User {
@@ -267,4 +269,44 @@ model Invoice {
   @@unique([organizationId, invoiceNumber])
   @@index([organizationId])
   @@index([organizationId, status])
+}
+
+// ─── API Keys (for external integrations) ─────────────────────────
+
+model ApiKey {
+  id              String    @id @default(cuid())
+  organizationId  String
+  name            String    // e.g., "Zapier", "Stripe Webhook", "Billbee"
+  keyHash         String    // SHA-256 hash of the key (never store plaintext)
+  keyPrefix       String    // First 8 chars for identification (e.g., "arc_ab12...")
+  permissions     String    @default("webhook") // webhook | full_read | full_write
+  lastUsedAt      DateTime?
+  expiresAt       DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([keyHash])
+}
+
+// ─── Webhook Logs ─────────────────────────────────────────────────
+
+model WebhookLog {
+  id              String   @id @default(cuid())
+  organizationId  String
+  source          String   // zapier | stripe | billbee | custom | unknown
+  event           String   // invoice.created | document.uploaded | transaction.created
+  payload         String   // JSON — raw incoming payload
+  status          String   @default("RECEIVED") // RECEIVED | PROCESSED | FAILED
+  errorMessage    String?
+  processedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([organizationId, source])
+  @@index([createdAt])
 }

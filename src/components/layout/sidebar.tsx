@@ -14,6 +14,7 @@ import {
   BookOpen,
   Calculator,
   Settings,
+  Plug,
   ChevronLeft,
   LogOut,
   X,
@@ -37,6 +38,7 @@ const secondaryNavigation = [
 
 const settingsNavigation = [
   { name: "Einstellungen", href: "/settings", icon: Settings },
+  { name: "Integrationen", href: "/settings/integrations", icon: Plug },
 ];
 
 interface SidebarProps {
@@ -69,7 +71,10 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
     : "??";
 
   function renderNavItem(item: { name: string; href: string; icon: LucideIcon }) {
-    const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+    // For /settings specifically, only match exact path (not /settings/integrations)
+    const isActive = item.href === "/settings"
+      ? pathname === item.href
+      : pathname === item.href || pathname?.startsWith(item.href + "/");
     const Icon = item.icon;
 
     return (
