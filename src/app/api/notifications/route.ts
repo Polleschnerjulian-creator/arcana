@@ -26,6 +26,7 @@ export async function GET() {
       unmatchedBankTransactions,
       overdueInvoices,
       draftTransactions,
+      aiSuggestedBankTransactions,
     ] = await Promise.all([
       // Documents with ocrStatus PENDING or PROCESSING
       prisma.document.count({
@@ -66,7 +67,23 @@ export async function GET() {
           status: "DRAFT",
         },
       }),
+
+      // Bank transactions with AI_SUGGESTED match
+      prisma.bankTransaction.count({
+        where: {
+          matchStatus: "AI_SUGGESTED",
+          bankAccount: { organizationId: orgId },
+        },
+      }),
     ]);
+
+    // Total pending = all inbox items that need attention
+    const totalPending =
+      pendingDocuments +
+      failedDocuments +
+      unmatchedBankTransactions +
+      draftTransactions +
+      aiSuggestedBankTransactions;
 
     return NextResponse.json({
       success: true,
@@ -76,6 +93,8 @@ export async function GET() {
         unmatchedBankTransactions,
         overdueInvoices,
         draftTransactions,
+        aiSuggestedBankTransactions,
+        totalPending,
       },
     });
   } catch (error) {

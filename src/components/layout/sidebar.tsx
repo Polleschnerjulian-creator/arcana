@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
+  Inbox,
   LayoutDashboard,
   ArrowLeftRight,
   FileText,
@@ -29,6 +30,8 @@ interface NotificationCounts {
   unmatchedBankTransactions: number;
   overdueInvoices: number;
   draftTransactions: number;
+  aiSuggestedBankTransactions: number;
+  totalPending: number;
 }
 
 function useNotificationCounts() {
@@ -63,6 +66,7 @@ function useNotificationCounts() {
 // ─── Navigation Items ───────────────────────────────────────────
 
 const mainNavigation = [
+  { name: "Eingangskorb", href: "/inbox", icon: Inbox, badgeKey: "totalPending" as const },
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, badgeKey: null },
   { name: "Buchungen", href: "/transactions", icon: ArrowLeftRight, badgeKey: "draftTransactions" as const },
   { name: "Belege", href: "/documents", icon: FileText, badgeKey: "documents" as const },
@@ -96,6 +100,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   // Compute badge counts for each nav item
   function getBadgeCount(badgeKey: string | null): number {
     if (!badgeKey || !notificationCounts) return 0;
+    if (badgeKey === "totalPending") return notificationCounts.totalPending;
     if (badgeKey === "documents") {
       return notificationCounts.pendingDocuments + notificationCounts.failedDocuments;
     }

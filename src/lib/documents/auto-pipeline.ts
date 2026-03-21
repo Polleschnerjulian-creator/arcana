@@ -447,6 +447,14 @@ export async function runDocumentPipeline(
       } catch {
         // Audit failure is non-blocking
       }
+
+      // Cross-match: try to link with existing bank transactions
+      try {
+        const { crossMatchDocumentWithBank } = await import("@/lib/inbox/cross-match");
+        await crossMatchDocumentWithBank(documentId, organizationId);
+      } catch (crossMatchErr) {
+        console.error("[Cross-Match]", crossMatchErr);
+      }
     } catch (err) {
       console.error(
         "[Auto-Pipeline] Failed to create draft transaction:",
