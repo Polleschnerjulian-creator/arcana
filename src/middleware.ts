@@ -18,7 +18,9 @@ export const config = {
     "/tax/:path*",
     "/settings/:path*",
     "/invoices/:path*",
+    "/inbox/:path*",
     // API routes (except /api/auth/* which must be public for login/register)
+    "/api/inbox/:path*",
     "/api/accounts/:path*",
     "/api/transactions/:path*",
     "/api/documents/:path*",
