@@ -277,23 +277,40 @@ async function processInvoiceCreated(
       }
     }
 
-    const invoiceNumber = `RE-${year}-${String(nextNumber).padStart(4, "0")}`;
+    let invoiceNumber = `RE-${year}-${String(nextNumber).padStart(4, "0")}`;
 
-    return tx.invoice.create({
-      data: {
-        organizationId,
-        invoiceNumber,
-        customerName: data.customerName,
-        customerAddress: data.customerAddress || null,
-        issueDate: new Date(data.issueDate),
-        dueDate: new Date(data.dueDate),
-        status: "DRAFT",
-        lineItems: JSON.stringify(lineItems),
-        subtotal,
-        taxAmount,
-        total,
-      },
-    });
+    // Retry on unique constraint violation (race condition)
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        return await tx.invoice.create({
+          data: {
+            organizationId,
+            invoiceNumber,
+            customerName: data.customerName,
+            customerAddress: data.customerAddress || null,
+            issueDate: new Date(data.issueDate),
+            dueDate: new Date(data.dueDate),
+            status: "DRAFT",
+            lineItems: JSON.stringify(lineItems),
+            subtotal,
+            taxAmount,
+            total,
+          },
+        });
+      } catch (err: unknown) {
+        const prismaError = err as { code?: string };
+        if (prismaError.code === "P2002" && retries > 1) {
+          nextNumber++;
+          invoiceNumber = `RE-${year}-${String(nextNumber).padStart(4, "0")}`;
+          retries--;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    throw new Error("Invoice number generation failed after retries");
   });
 
   return invoice.id;

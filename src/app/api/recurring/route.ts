@@ -173,20 +173,24 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit entry
-    await createAuditEntry({
-      organizationId: session.user.organizationId,
-      userId: session.user.id,
-      action: "CREATE",
-      entityType: "ORGANIZATION",
-      entityId: template.id,
-      newState: {
-        name: template.name,
-        type: template.type,
-        interval: template.interval,
-        dayOfMonth: template.dayOfMonth,
-        nextRunDate: template.nextRunDate.toISOString(),
-      },
-    });
+    try {
+      await createAuditEntry({
+        organizationId: session.user.organizationId,
+        userId: session.user.id,
+        action: "CREATE",
+        entityType: "ORGANIZATION",
+        entityId: template.id,
+        newState: {
+          name: template.name,
+          type: template.type,
+          interval: template.interval,
+          dayOfMonth: template.dayOfMonth,
+          nextRunDate: template.nextRunDate.toISOString(),
+        },
+      });
+    } catch {
+      // Audit module may not be ready
+    }
 
     return NextResponse.json(
       {

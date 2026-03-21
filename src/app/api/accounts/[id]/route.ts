@@ -11,9 +11,10 @@ const updateAccountSchema = z.object({
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -22,8 +23,6 @@ export async function PATCH(
         { status: 401 }
       );
     }
-
-    const { id } = params;
 
     // Verify the account belongs to the user's organization
     const account = await prisma.account.findFirst({

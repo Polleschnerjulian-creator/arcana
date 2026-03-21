@@ -28,5 +28,9 @@ export const config = {
     "/api/reports/:path*",
     "/api/export/:path*",
     "/api/settings/:path*",
+    "/api/invoices/:path*",
+    "/api/chat/:path*",
+    "/api/recurring/:path*",
+    "/api/notifications",
   ],
 };

@@ -39,10 +39,14 @@ const SKR03_DEFAULT_ACCOUNTS = [
   { number: "8300", name: "Erlöse 7% USt", type: "REVENUE", category: "ERLOES" },
   { number: "8120", name: "Steuerfreie Erlöse", type: "REVENUE", category: "ERLOES" },
 
+  // REVENUE accounts (additional)
+  { number: "8000", name: "Erlöse steuerfrei", type: "REVENUE", category: "ERLOES" },
+
   // EXPENSE accounts (Aufwand)
   { number: "4100", name: "Löhne und Gehälter", type: "EXPENSE", category: "AUFWAND" },
   { number: "4200", name: "Soziale Abgaben", type: "EXPENSE", category: "AUFWAND" },
-  { number: "6300", name: "Sonstige betriebliche Aufwendungen", type: "EXPENSE", category: "AUFWAND" },
+  { number: "4900", name: "Sonstige betriebliche Aufwendungen", type: "EXPENSE", category: "AUFWAND" },
+  { number: "6300", name: "Sonstige betriebliche Aufwendungen (allg.)", type: "EXPENSE", category: "AUFWAND" },
 ] as const;
 
 export async function POST(request: Request) {

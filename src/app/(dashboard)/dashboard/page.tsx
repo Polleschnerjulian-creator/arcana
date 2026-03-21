@@ -109,51 +109,52 @@ async function getDashboardData(organizationId: string) {
     },
   });
 
-  // Monthly trend: last 6 months revenue vs expenses
-  const monthlyTrend: {
-    month: string;
-    label: string;
-    revenue: number;
-    expenses: number;
-  }[] = [];
-
-  for (let i = 5; i >= 0; i--) {
+  // Monthly trend: last 6 months revenue vs expenses (parallelized)
+  const monthRanges = Array.from({ length: 6 }, (_, idx) => {
+    const i = 5 - idx;
     const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
-
     const monthLabel = monthStart.toLocaleDateString("de-DE", { month: "short" });
+    return { monthStart, monthEnd, monthLabel };
+  });
 
-    const rev = await prisma.transactionLine.aggregate({
-      _sum: { credit: true },
-      where: {
-        transaction: {
-          organizationId,
-          status: "BOOKED",
-          date: { gte: monthStart, lte: monthEnd },
-        },
-        account: { type: "REVENUE" },
-      },
-    });
+  const monthlyTrendResults = await Promise.all(
+    monthRanges.map(async ({ monthStart, monthEnd, monthLabel }) => {
+      const [rev, exp] = await Promise.all([
+        prisma.transactionLine.aggregate({
+          _sum: { credit: true },
+          where: {
+            transaction: {
+              organizationId,
+              status: "BOOKED",
+              date: { gte: monthStart, lte: monthEnd },
+            },
+            account: { type: "REVENUE" },
+          },
+        }),
+        prisma.transactionLine.aggregate({
+          _sum: { debit: true },
+          where: {
+            transaction: {
+              organizationId,
+              status: "BOOKED",
+              date: { gte: monthStart, lte: monthEnd },
+            },
+            account: { type: "EXPENSE" },
+          },
+        }),
+      ]);
 
-    const exp = await prisma.transactionLine.aggregate({
-      _sum: { debit: true },
-      where: {
-        transaction: {
-          organizationId,
-          status: "BOOKED",
-          date: { gte: monthStart, lte: monthEnd },
-        },
-        account: { type: "EXPENSE" },
-      },
-    });
+      return {
+        month: monthStart.toISOString(),
+        label: monthLabel,
+        revenue: Number(rev._sum.credit ?? 0),
+        expenses: Number(exp._sum.debit ?? 0),
+      };
+    })
+  );
 
-    monthlyTrend.push({
-      month: monthStart.toISOString(),
-      label: monthLabel,
-      revenue: Number(rev._sum.credit ?? 0),
-      expenses: Number(exp._sum.debit ?? 0),
-    });
-  }
+  const monthlyTrend = monthlyTrendResults;
 
   return {
     revenue: Number(revenueThisMonth._sum.credit ?? 0),

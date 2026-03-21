@@ -24,9 +24,10 @@ const TAX_ACCOUNTS: Record<number, string> = {
 
 export async function POST(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -38,7 +39,7 @@ export async function POST(
 
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: id,
         organizationId: session.user.organizationId,
       },
     });
@@ -163,7 +164,7 @@ export async function POST(
 
       // Update invoice status and link transaction
       const updatedInvoice = await tx.invoice.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: "SENT",
           transactionId: transaction.id,

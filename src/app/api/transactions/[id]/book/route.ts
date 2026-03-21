@@ -11,9 +11,10 @@ import { learnCategorization } from "@/lib/ai/learning";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -32,7 +33,7 @@ export async function POST(
 
     const existing = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id: id,
         organizationId: session.user.organizationId,
       },
       include: {
@@ -86,7 +87,7 @@ export async function POST(
 
     // Book the transaction
     const booked = await prisma.transaction.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         status: "BOOKED",
         bookedAt: new Date(),
@@ -125,7 +126,7 @@ export async function POST(
     // Learn from this booking for future auto-categorization
     try {
       const doc = await prisma.document.findFirst({
-        where: { transactions: { some: { id: params.id } } },
+        where: { transactions: { some: { id: id } } },
       });
       if (doc?.aiExtraction) {
         const extraction = JSON.parse(doc.aiExtraction as string);

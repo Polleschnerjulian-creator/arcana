@@ -140,25 +140,29 @@ export async function PATCH(
     });
 
     // Audit entry
-    await createAuditEntry({
-      organizationId: session.user.organizationId,
-      userId: session.user.id,
-      action: "UPDATE",
-      entityType: "ORGANIZATION",
-      entityId: updated.id,
-      previousState: {
-        name: existing.name,
-        interval: existing.interval,
-        dayOfMonth: existing.dayOfMonth,
-        isActive: existing.isActive,
-      },
-      newState: {
-        name: updated.name,
-        interval: updated.interval,
-        dayOfMonth: updated.dayOfMonth,
-        isActive: updated.isActive,
-      },
-    });
+    try {
+      await createAuditEntry({
+        organizationId: session.user.organizationId,
+        userId: session.user.id,
+        action: "UPDATE",
+        entityType: "ORGANIZATION",
+        entityId: updated.id,
+        previousState: {
+          name: existing.name,
+          interval: existing.interval,
+          dayOfMonth: existing.dayOfMonth,
+          isActive: existing.isActive,
+        },
+        newState: {
+          name: updated.name,
+          interval: updated.interval,
+          dayOfMonth: updated.dayOfMonth,
+          isActive: updated.isActive,
+        },
+      });
+    } catch {
+      // Audit module may not be ready
+    }
 
     return NextResponse.json({
       success: true,
@@ -230,15 +234,19 @@ export async function DELETE(
     });
 
     // Audit entry
-    await createAuditEntry({
-      organizationId: session.user.organizationId,
-      userId: session.user.id,
-      action: "DELETE",
-      entityType: "ORGANIZATION",
-      entityId: updated.id,
-      previousState: { isActive: existing.isActive },
-      newState: { isActive: false },
-    });
+    try {
+      await createAuditEntry({
+        organizationId: session.user.organizationId,
+        userId: session.user.id,
+        action: "DELETE",
+        entityType: "ORGANIZATION",
+        entityId: updated.id,
+        previousState: { isActive: existing.isActive },
+        newState: { isActive: false },
+      });
+    } catch {
+      // Audit module may not be ready
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

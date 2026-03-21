@@ -9,9 +9,10 @@ import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -30,7 +31,7 @@ export async function POST(
 
     const existing = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id: id,
         organizationId: session.user.organizationId,
       },
       include: {
@@ -106,7 +107,7 @@ export async function POST(
 
       // 2. Cancel the original transaction — link to reversal
       const cancelled = await tx.transaction.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: "CANCELLED",
           cancelledById: reversal.id,
@@ -137,7 +138,7 @@ export async function POST(
         userId: session.user.id,
         action: "CANCEL",
         entityType: "TRANSACTION",
-        entityId: params.id,
+        entityId: id,
         previousState: { status: "BOOKED" },
         newState: {
           status: "CANCELLED",
@@ -155,7 +156,7 @@ export async function POST(
           description: result.reversal.description,
           status: "BOOKED",
           isStorno: true,
-          originalTransactionId: params.id,
+          originalTransactionId: id,
         },
       });
     } catch {

@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db";
-import { createWorker } from "tesseract.js";
 import { extractDocumentData } from "@/lib/ai/extract";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
 import { findLearnedCategorization } from "@/lib/ai/learning";
@@ -67,10 +66,17 @@ export async function runDocumentPipeline(
       // Use pdf-parse to extract text directly from PDF
       // Works on Vercel Serverless (no Canvas/Worker dependencies)
       // pdf-parse v1 — simple, serverless-compatible
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
+      // Use direct lib path to avoid test-file initialization issue
+      let pdfParse: (buf: Buffer) => Promise<{ text: string; numpages: number }>;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        pdfParse = require("pdf-parse/lib/pdf-parse.js");
+      } catch {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        pdfParse = require("pdf-parse");
+      }
       const pdfData = await pdfParse(Buffer.from(pdfBuffer));
-      let extractedText = (pdfData.text || "").trim();
+      const extractedText = (pdfData.text || "").trim();
 
       // Check if we got substantial text (digital PDF)
       if (extractedText.length > 50) {
@@ -119,7 +125,7 @@ export async function runDocumentPipeline(
       return;
     }
   }
-  // Images: run Tesseract.js
+  // Images: use Claude Vision API to extract text directly
   else if (document.mimeType.startsWith("image/")) {
     try {
       // Mark as processing
@@ -127,6 +133,16 @@ export async function runDocumentPipeline(
         where: { id: documentId },
         data: { ocrStatus: "PROCESSING" },
       });
+
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        await prisma.document.update({
+          where: { id: documentId },
+          data: { ocrStatus: "FAILED" },
+        });
+        console.warn("[Auto-Pipeline] ANTHROPIC_API_KEY not set, cannot process image");
+        return;
+      }
 
       // Fetch file from storage
       if (!document.storagePath.startsWith("http")) {
@@ -139,16 +155,31 @@ export async function runDocumentPipeline(
       }
 
       const arrayBuffer = await response.arrayBuffer();
-      const imageBuffer = Buffer.from(arrayBuffer);
+      const base64 = Buffer.from(arrayBuffer).toString("base64");
+      const mediaType = document.mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
-      // Run Tesseract.js OCR (German)
-      const worker = await createWorker("deu");
-      const {
-        data: { text },
-      } = await worker.recognize(imageBuffer);
-      await worker.terminate();
+      const Anthropic = (await import("@anthropic-ai/sdk")).default;
+      const anthropic = new Anthropic({ apiKey });
 
-      ocrText = text;
+      const result = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: mediaType, data: base64 },
+            },
+            {
+              type: "text",
+              text: "Lese den gesamten Text aus diesem Beleg/Rechnung. Gib den Text vollständig wieder, so wie er auf dem Dokument steht. Nur den Text, keine Kommentare.",
+            },
+          ],
+        }],
+      });
+
+      ocrText = result.content[0].type === "text" ? result.content[0].text : null;
 
       // Update document with OCR result
       await prisma.document.update({
@@ -160,10 +191,10 @@ export async function runDocumentPipeline(
       });
 
       console.log(
-        `[Auto-Pipeline] OCR completed for document ${documentId} (${text.length} chars)`
+        `[Auto-Pipeline] Claude Vision OCR completed for document ${documentId} (${ocrText?.length ?? 0} chars)`
       );
     } catch (err) {
-      console.error("[Auto-Pipeline] OCR failed:", err);
+      console.error("[Auto-Pipeline] Claude Vision OCR failed:", err);
       try {
         await prisma.document.update({
           where: { id: documentId },

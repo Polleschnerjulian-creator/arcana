@@ -11,9 +11,10 @@ import { createAuditEntry } from "@/lib/compliance/audit-log";
 
 export async function POST(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -28,7 +29,7 @@ export async function POST(
     // Bankbewegung laden
     const bankTransaction = await prisma.bankTransaction.findFirst({
       where: {
-        id: params.id,
+        id: id,
         bankAccount: { organizationId: orgId },
       },
     });
@@ -58,7 +59,7 @@ export async function POST(
     };
 
     const updated = await prisma.bankTransaction.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         matchStatus: "UNMATCHED",
         matchedTransactionId: null,
@@ -78,7 +79,7 @@ export async function POST(
       userId: session.user.id,
       action: "UPDATE",
       entityType: "BANK_TRANSACTION",
-      entityId: params.id,
+      entityId: id,
       previousState,
       newState,
     });

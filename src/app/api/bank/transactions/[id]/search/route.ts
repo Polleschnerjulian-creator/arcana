@@ -10,9 +10,10 @@ import { prisma } from "@/lib/db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -33,7 +34,7 @@ export async function GET(
     // Verify bank transaction belongs to this organization
     const bankTransaction = await prisma.bankTransaction.findFirst({
       where: {
-        id: params.id,
+        id: id,
         bankAccount: { organizationId: orgId },
       },
     });

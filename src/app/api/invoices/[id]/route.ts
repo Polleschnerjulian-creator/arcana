@@ -44,9 +44,10 @@ const updateInvoiceSchema = z.object({
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -58,7 +59,7 @@ export async function GET(
 
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: id,
         organizationId: session.user.organizationId,
       },
       include: {
@@ -113,9 +114,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -127,7 +129,7 @@ export async function PATCH(
 
     const existing = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: id,
         organizationId: session.user.organizationId,
       },
     });
@@ -222,7 +224,7 @@ export async function PATCH(
     };
 
     const updated = await prisma.invoice.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
     });
 
@@ -285,9 +287,10 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -299,7 +302,7 @@ export async function DELETE(
 
     const existing = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: id,
         organizationId: session.user.organizationId,
       },
     });
@@ -323,7 +326,7 @@ export async function DELETE(
     }
 
     await prisma.invoice.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     // Audit entry
@@ -333,7 +336,7 @@ export async function DELETE(
         userId: session.user.id,
         action: "DELETE",
         entityType: "INVOICE",
-        entityId: params.id,
+        entityId: id,
         previousState: {
           invoiceNumber: existing.invoiceNumber,
           customerName: existing.customerName,

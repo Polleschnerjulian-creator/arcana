@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { createAuditEntry } from "@/lib/compliance/audit-log";
 
 // ─── Helpers ────────────────────────────────────────────────────
 
@@ -82,23 +81,40 @@ async function createInvoiceFromTemplate(
       }
     }
 
-    const invoiceNumber = `RE-${year}-${String(nextNumber).padStart(4, "0")}`;
+    let invoiceNumber = `RE-${year}-${String(nextNumber).padStart(4, "0")}`;
 
-    return tx.invoice.create({
-      data: {
-        organizationId,
-        invoiceNumber,
-        customerName: templateData.customerName,
-        customerAddress: templateData.customerAddress || null,
-        issueDate,
-        dueDate,
-        status: "DRAFT",
-        lineItems: JSON.stringify(lineItems),
-        subtotal,
-        taxAmount,
-        total,
-      },
-    });
+    // Retry on unique constraint violation (race condition)
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        return await tx.invoice.create({
+          data: {
+            organizationId,
+            invoiceNumber,
+            customerName: templateData.customerName,
+            customerAddress: templateData.customerAddress || null,
+            issueDate,
+            dueDate,
+            status: "DRAFT",
+            lineItems: JSON.stringify(lineItems),
+            subtotal,
+            taxAmount,
+            total,
+          },
+        });
+      } catch (err: unknown) {
+        const prismaError = err as { code?: string };
+        if (prismaError.code === "P2002" && retries > 1) {
+          nextNumber++;
+          invoiceNumber = `RE-${year}-${String(nextNumber).padStart(4, "0")}`;
+          retries--;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    throw new Error("Invoice number generation failed after retries");
   });
 
   return invoice;
@@ -214,21 +230,9 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        // Audit entry for the created entity
-        await createAuditEntry({
-          organizationId: template.organizationId,
-          userId: "SYSTEM",
-          action: "CREATE",
-          entityType,
-          entityId,
-          newState: {
-            source: "recurring",
-            templateId: template.id,
-            templateName: template.name,
-            executedAt: now.toISOString(),
-            nextRunDate: formatDate(nextRunDate),
-          },
-        });
+        console.log(
+          `[Cron/Recurring] Created ${entityType} ${entityId} from template "${template.name}" (next: ${formatDate(nextRunDate)})`
+        );
 
         processed++;
       } catch (error) {

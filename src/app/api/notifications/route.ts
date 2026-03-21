@@ -19,6 +19,16 @@ export async function GET() {
 
     const orgId = session.user.organizationId;
 
+    // Reset stuck documents (processing for more than 5 minutes)
+    await prisma.document.updateMany({
+      where: {
+        organizationId: orgId,
+        ocrStatus: "PROCESSING",
+        uploadedAt: { lt: new Date(Date.now() - 5 * 60 * 1000) },
+      },
+      data: { ocrStatus: "FAILED" },
+    });
+
     // Run all count queries in parallel
     const [
       pendingDocuments,

@@ -54,9 +54,10 @@ async function getTransaction(id: string, organizationId: string) {
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -67,7 +68,7 @@ export async function GET(
     }
 
     const transaction = await getTransaction(
-      params.id,
+      id,
       session.user.organizationId
     );
 
@@ -102,9 +103,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -116,7 +118,7 @@ export async function PATCH(
 
     const existing = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id,
         organizationId: session.user.organizationId,
       },
       include: { lines: true },
@@ -198,12 +200,12 @@ export async function PATCH(
       // Delete old lines if new lines are provided
       if (data.lines) {
         await tx.transactionLine.deleteMany({
-          where: { transactionId: params.id },
+          where: { transactionId: id },
         });
       }
 
       const updated = await tx.transaction.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           ...(data.date && { date: new Date(data.date) }),
           ...(data.description && { description: data.description }),
@@ -294,9 +296,10 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -308,7 +311,7 @@ export async function DELETE(
 
     const existing = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id,
         organizationId: session.user.organizationId,
       },
     });
@@ -333,7 +336,7 @@ export async function DELETE(
 
     // Cascade delete will remove lines too
     await prisma.transaction.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     // Audit entry
@@ -343,7 +346,7 @@ export async function DELETE(
         userId: session.user.id,
         action: "DELETE",
         entityType: "TRANSACTION",
-        entityId: params.id,
+        entityId: id,
         previousState: {
           date: existing.date.toISOString(),
           description: existing.description,

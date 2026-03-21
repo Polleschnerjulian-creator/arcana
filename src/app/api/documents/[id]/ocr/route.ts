@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
-import { createWorker } from "tesseract.js";
 
 // ─── POST: OCR mit Tesseract.js ─────────────────────────────────
 
@@ -105,6 +104,18 @@ export async function POST(
 
       const arrayBuffer = await response.arrayBuffer();
       imageBuffer = Buffer.from(arrayBuffer);
+
+      // Post-read buffer size check
+      if (imageBuffer.length > 10 * 1024 * 1024) {
+        await prisma.document.update({
+          where: { id },
+          data: { ocrStatus: "FAILED" },
+        });
+        return NextResponse.json(
+          { success: false, error: "Datei zu groß für Texterkennung (max. 10 MB)." },
+          { status: 413 }
+        );
+      }
     } catch (fetchError) {
       console.error("[OCR] Fehler beim Laden der Datei:", fetchError);
       await prisma.document.update({
@@ -120,17 +131,48 @@ export async function POST(
       );
     }
 
-    // Run Tesseract.js OCR
+    // Run Claude Vision OCR
     let recognizedText: string;
     try {
-      const worker = await createWorker("deu");
-      const {
-        data: { text },
-      } = await worker.recognize(imageBuffer);
-      await worker.terminate();
-      recognizedText = text;
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        await prisma.document.update({
+          where: { id },
+          data: { ocrStatus: "FAILED" },
+        });
+        return NextResponse.json(
+          { success: false, error: "ANTHROPIC_API_KEY nicht konfiguriert." },
+          { status: 500 }
+        );
+      }
+
+      const Anthropic = (await import("@anthropic-ai/sdk")).default;
+      const anthropic = new Anthropic({ apiKey });
+
+      const base64 = imageBuffer.toString("base64");
+      const mediaType = document.mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+
+      const result = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: mediaType, data: base64 },
+            },
+            {
+              type: "text",
+              text: "Lese den gesamten Text aus diesem Beleg/Rechnung. Gib den Text vollständig wieder, so wie er auf dem Dokument steht. Nur den Text, keine Kommentare.",
+            },
+          ],
+        }],
+      });
+
+      recognizedText = result.content[0].type === "text" ? result.content[0].text : "";
     } catch (ocrError) {
-      console.error("[OCR] Tesseract-Fehler:", ocrError);
+      console.error("[OCR] Claude Vision-Fehler:", ocrError);
       await prisma.document.update({
         where: { id },
         data: { ocrStatus: "FAILED" },
