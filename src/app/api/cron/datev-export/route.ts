@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         const blob = await put(
           `exports/${org.id}/DATEV-${monthStr}.csv`,
           datevCsv,
-          { access: "public", contentType: "text/csv" }
+          { access: "private", contentType: "text/csv", token: process.env.BLOB_READ_WRITE_TOKEN! }
         );
 
         console.log(

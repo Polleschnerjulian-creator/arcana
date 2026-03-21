@@ -32,7 +32,7 @@ export async function saveDocument(
   }
 
   const blob = await put(blobPath, file, {
-    access: "public",
+    access: "private",
     contentType: getMimeType(fileName),
     token,
   });
