@@ -166,6 +166,7 @@ async function getTaxData(organizationId: string) {
       payloadAmount: Number(tp.payloadAmount),
       status: tp.status as "OPEN" | "CALCULATED" | "FILED",
       filedAt: tp.filedAt?.toISOString() ?? null,
+      createdAt: tp.createdAt.toISOString(),
     })),
   };
 }
@@ -449,9 +450,17 @@ export default async function TaxPage() {
                           {formatCurrency(tp.payloadAmount)}
                         </td>
                         <td className="px-6 py-3.5 text-center">
-                          <Badge variant={statusConfig.variant}>
-                            {statusConfig.label}
-                          </Badge>
+                          <div className="flex flex-col items-center gap-1">
+                            <Badge variant={statusConfig.variant}>
+                              {statusConfig.label}
+                            </Badge>
+                            {tp.status === "CALCULATED" && (
+                              <span className="text-[10px] text-text-muted">
+                                Automatisch berechnet am{" "}
+                                {formatDate(tp.createdAt)}
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

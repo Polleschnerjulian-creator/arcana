@@ -249,6 +249,65 @@ export async function POST(request: NextRequest) {
 
             if (isHighConfidence) {
               autoConfirmed++;
+
+              // Auto-mark linked invoice as PAID for auto-confirmed matches
+              try {
+                const linkedInvoice = await prisma.invoice.findFirst({
+                  where: {
+                    transactionId: matches[0].openItemId,
+                    status: { in: ["SENT", "OVERDUE"] },
+                  },
+                });
+
+                if (linkedInvoice) {
+                  await prisma.invoice.update({
+                    where: { id: linkedInvoice.id },
+                    data: { status: "PAID" },
+                  });
+
+                  await createAuditEntry({
+                    organizationId: session.user.organizationId,
+                    userId: session.user.id,
+                    action: "UPDATE",
+                    entityType: "INVOICE",
+                    entityId: linkedInvoice.id,
+                    previousState: { status: linkedInvoice.status },
+                    newState: { status: "PAID", paidVia: "BANK_MATCH_AUTO" },
+                  }).catch(() => {});
+                }
+              } catch {
+                // Auto-pay darf den Import nicht blockieren
+              }
+
+              // Auto-book the matched transaction if still DRAFT
+              try {
+                const matchedTx = await prisma.transaction.findUnique({
+                  where: { id: matches[0].openItemId },
+                });
+
+                if (matchedTx && matchedTx.status === "DRAFT") {
+                  await prisma.transaction.update({
+                    where: { id: matchedTx.id },
+                    data: {
+                      status: "BOOKED",
+                      bookedAt: new Date(),
+                      bookedById: session.user.id,
+                    },
+                  });
+
+                  await createAuditEntry({
+                    organizationId: session.user.organizationId,
+                    userId: session.user.id,
+                    action: "BOOK",
+                    entityType: "TRANSACTION",
+                    entityId: matchedTx.id,
+                    previousState: { status: "DRAFT" },
+                    newState: { status: "BOOKED", bookedVia: "BANK_MATCH_AUTO" },
+                  }).catch(() => {});
+                }
+              } catch {
+                // Auto-book darf den Import nicht blockieren
+              }
             } else {
               autoSuggested++;
             }

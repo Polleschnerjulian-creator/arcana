@@ -101,6 +101,69 @@ export async function POST(
       // Audit darf den Vorgang nicht blockieren
     }
 
+    // Auto-mark linked invoice as PAID
+    if (bankTransaction.matchedTransactionId) {
+      try {
+        const linkedInvoice = await prisma.invoice.findFirst({
+          where: {
+            transactionId: bankTransaction.matchedTransactionId,
+            status: { in: ["SENT", "OVERDUE"] },
+          },
+        });
+
+        if (linkedInvoice) {
+          await prisma.invoice.update({
+            where: { id: linkedInvoice.id },
+            data: { status: "PAID" },
+          });
+
+          await createAuditEntry({
+            organizationId: session.user.organizationId,
+            userId: session.user.id,
+            action: "UPDATE",
+            entityType: "INVOICE",
+            entityId: linkedInvoice.id,
+            previousState: { status: linkedInvoice.status },
+            newState: { status: "PAID", paidVia: "BANK_MATCH_AUTO" },
+          }).catch(() => {});
+        }
+      } catch {
+        // Auto-pay darf den Vorgang nicht blockieren
+      }
+    }
+
+    // Auto-book the matched transaction if still DRAFT
+    if (bankTransaction.matchedTransactionId) {
+      try {
+        const matchedTx = await prisma.transaction.findUnique({
+          where: { id: bankTransaction.matchedTransactionId },
+        });
+
+        if (matchedTx && matchedTx.status === "DRAFT") {
+          await prisma.transaction.update({
+            where: { id: matchedTx.id },
+            data: {
+              status: "BOOKED",
+              bookedAt: new Date(),
+              bookedById: session.user.id,
+            },
+          });
+
+          await createAuditEntry({
+            organizationId: session.user.organizationId,
+            userId: session.user.id,
+            action: "BOOK",
+            entityType: "TRANSACTION",
+            entityId: matchedTx.id,
+            previousState: { status: "DRAFT" },
+            newState: { status: "BOOKED", bookedVia: "BANK_MATCH_AUTO" },
+          }).catch(() => {});
+        }
+      } catch {
+        // Auto-book darf den Vorgang nicht blockieren
+      }
+    }
+
     // Learn from the confirmed match for future auto-categorization
     try {
       if (updated.counterpartName && updated.matchedTransactionId) {
