@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { BankOverview } from "@/components/bank/bank-overview";
 import { ReconciliationSummary } from "@/components/bank/reconciliation-summary";
-import { Building2, Upload, Plus, AlertCircle, CheckCircle2 } from "lucide-react";
+import { AddBankAccountButton } from "@/components/bank/add-bank-account-button";
+import { Building2, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default async function BankPage() {
   const session = await getServerSession(authOptions);
@@ -23,6 +24,13 @@ export default async function BankPage() {
   }
 
   const orgId = session.user.organizationId;
+
+  // Fetch available accounts for linking (bank/cash accounts)
+  const availableAccounts = await prisma.account.findMany({
+    where: { organizationId: orgId, isActive: true, type: "ASSET", category: "UMLAUF" },
+    select: { id: true, number: true, name: true },
+    orderBy: { number: "asc" },
+  });
 
   // Fetch bank accounts with transaction counts and linked account info
   const bankAccounts = await prisma.bankAccount.findMany({
@@ -120,10 +128,7 @@ export default async function BankPage() {
               Umsätze importieren
             </Button>
           </Link>
-          <Button disabled>
-            <Plus className="h-4 w-4" />
-            Bankkonto hinzufügen
-          </Button>
+          <AddBankAccountButton accounts={availableAccounts} />
         </div>
       </div>
 
@@ -218,10 +223,7 @@ export default async function BankPage() {
             <p className="text-xs text-text-muted mt-1 mb-4">
               Verknüpfen Sie ein Bankkonto, um Umsätze zu importieren.
             </p>
-            <Button disabled>
-              <Plus className="h-4 w-4" />
-              Bankkonto hinzufügen
-            </Button>
+            <AddBankAccountButton accounts={availableAccounts} />
           </CardContent>
         </Card>
       ) : (
