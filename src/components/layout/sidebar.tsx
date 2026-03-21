@@ -14,10 +14,6 @@ import {
   BookOpen,
   Calculator,
   Settings,
-  Plug,
-  Repeat,
-  ShoppingBag,
-  Palette,
   ChevronLeft,
   LogOut,
   X,
@@ -82,10 +78,6 @@ const secondaryNavigation = [
 
 const settingsNavigation = [
   { name: "Einstellungen", href: "/settings", icon: Settings },
-  { name: "Rechnungsdesign", href: "/settings/invoice-design", icon: Palette },
-  { name: "Dauerauftraege", href: "/settings/recurring", icon: Repeat },
-  { name: "Integrationen", href: "/settings/integrations", icon: Plug },
-  { name: "Shopify", href: "/settings/shopify", icon: ShoppingBag },
 ];
 
 interface SidebarProps {
@@ -131,9 +123,9 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
     : "??";
 
   function renderNavItem(item: { name: string; href: string; icon: LucideIcon; badgeKey?: string | null }) {
-    // For /settings specifically, only match exact path (not /settings/integrations)
+    // For /settings, match all sub-paths since they're now nested in settings layout
     const isActive = item.href === "/settings"
-      ? pathname === item.href
+      ? pathname === item.href || pathname?.startsWith(item.href + "/")
       : pathname === item.href || pathname?.startsWith(item.href + "/");
     const Icon = item.icon;
     const badgeCount = getBadgeCount(item.badgeKey ?? null);

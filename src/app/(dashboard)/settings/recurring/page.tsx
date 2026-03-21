@@ -44,20 +44,5 @@ export default async function RecurringPage() {
 
   const templates = await getRecurringTemplates(organizationId);
 
-  return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">
-          Dauerauftraege
-        </h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Wiederkehrende Rechnungen und Buchungen automatisch erstellen lassen
-        </p>
-      </div>
-
-      {/* Recurring Panel */}
-      <RecurringPanel initialTemplates={templates} />
-    </div>
-  );
+  return <RecurringPanel initialTemplates={templates} />;
 }

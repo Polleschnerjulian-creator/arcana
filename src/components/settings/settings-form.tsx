@@ -10,11 +10,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Building2,
   Calculator,
-  User,
   Save,
   CheckCircle2,
   AlertCircle,
@@ -38,17 +36,8 @@ interface OrganizationData {
   fiscalYearStart: number;
 }
 
-interface UserData {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  createdAt: string;
-}
-
 interface SettingsFormProps {
   organization: OrganizationData;
-  user: UserData;
   hasBookedTransactions: boolean;
 }
 
@@ -79,20 +68,6 @@ const MONTHS = [
   { value: 11, label: "November" },
   { value: 12, label: "Dezember" },
 ];
-
-const ROLE_LABELS: Record<string, string> = {
-  OWNER: "Inhaber",
-  ADMIN: "Administrator",
-  BOOKKEEPER: "Buchhalter",
-  VIEWER: "Nur Lesen",
-};
-
-const ROLE_VARIANTS: Record<string, "success" | "info" | "warning" | "default"> = {
-  OWNER: "success",
-  ADMIN: "info",
-  BOOKKEEPER: "warning",
-  VIEWER: "default",
-};
 
 // ─── Feedback Component ─────────────────────────────────────────
 
@@ -127,7 +102,6 @@ function FeedbackMessage({
 
 export function SettingsForm({
   organization,
-  user,
   hasBookedTransactions,
 }: SettingsFormProps) {
   // ── Company section state ──
@@ -160,15 +134,6 @@ export function SettingsForm({
     message: string;
   } | null>(null);
 
-  // ── Password section state ──
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordFeedback, setPasswordFeedback] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
 
   // ── Save Company ──
   async function handleSaveCompany() {
@@ -254,64 +219,6 @@ export function SettingsForm({
     }
   }
 
-  // ── Change Password ──
-  async function handleChangePassword() {
-    setPasswordFeedback(null);
-
-    if (newPassword !== confirmPassword) {
-      setPasswordFeedback({
-        type: "error",
-        message: "Die Passwoerter stimmen nicht ueberein.",
-      });
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      setPasswordFeedback({
-        type: "error",
-        message: "Das neue Passwort muss mindestens 8 Zeichen lang sein.",
-      });
-      return;
-    }
-
-    setPasswordSaving(true);
-
-    try {
-      const res = await fetch("/api/settings/password", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setPasswordFeedback({
-          type: "error",
-          message: data.error || "Fehler beim Aendern des Passworts.",
-        });
-        return;
-      }
-
-      setPasswordFeedback({
-        type: "success",
-        message: "Passwort wurde erfolgreich geaendert.",
-      });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch {
-      setPasswordFeedback({
-        type: "error",
-        message: "Netzwerkfehler. Bitte erneut versuchen.",
-      });
-    } finally {
-      setPasswordSaving(false);
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -510,106 +417,6 @@ export function SettingsForm({
         </CardContent>
       </Card>
 
-      {/* ── Section: Benutzer ── */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning-light">
-              <User className="h-4 w-4 text-warning" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Benutzer</CardTitle>
-              <CardDescription>
-                Benutzerinformationen und Passwort aendern
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* User Info (read-only) */}
-          <div className="rounded-lg border border-border p-4 bg-gray-50/50 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-text-primary">
-                Benutzerprofil
-              </span>
-              <Badge variant={ROLE_VARIANTS[user.role] ?? "default"}>
-                {ROLE_LABELS[user.role] ?? user.role}
-              </Badge>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-text-muted">Name</p>
-                <p className="text-sm text-text-primary">{user.name}</p>
-              </div>
-              <div>
-                <p className="text-xs text-text-muted">E-Mail</p>
-                <p className="text-sm text-text-primary">{user.email}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Password Change */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-text-primary">
-              Passwort aendern
-            </h4>
-
-            <Input
-              label="Aktuelles Passwort"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Neues Passwort"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-              <Input
-                label="Neues Passwort bestaetigen"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-                error={
-                  confirmPassword && newPassword !== confirmPassword
-                    ? "Passwoerter stimmen nicht ueberein."
-                    : undefined
-                }
-              />
-            </div>
-
-            {passwordFeedback && (
-              <FeedbackMessage
-                type={passwordFeedback.type}
-                message={passwordFeedback.message}
-              />
-            )}
-
-            <div className="flex justify-end pt-2">
-              <Button
-                onClick={handleChangePassword}
-                disabled={
-                  passwordSaving ||
-                  !currentPassword ||
-                  !newPassword ||
-                  !confirmPassword
-                }
-              >
-                <Lock className="h-4 w-4" />
-                {passwordSaving
-                  ? "Speichert..."
-                  : "Passwort aendern"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

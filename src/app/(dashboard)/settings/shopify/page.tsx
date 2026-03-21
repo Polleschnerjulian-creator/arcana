@@ -63,22 +63,9 @@ export default async function ShopifySettingsPage() {
   ]);
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">
-          Shopify
-        </h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Shopify-Shop verbinden und Bestellungen automatisch verarbeiten
-        </p>
-      </div>
-
-      {/* Shopify Panel */}
-      <ShopifyPanel
-        initialConnection={connection}
-        initialOrders={orders}
-      />
-    </div>
+    <ShopifyPanel
+      initialConnection={connection}
+      initialOrders={orders}
+    />
   );
 }

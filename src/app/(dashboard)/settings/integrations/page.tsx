@@ -63,22 +63,9 @@ export default async function IntegrationsPage() {
   ]);
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">
-          Integrationen
-        </h1>
-        <p className="text-sm text-text-secondary mt-1">
-          API-Schluessel, Webhooks und externe Anbindungen verwalten
-        </p>
-      </div>
-
-      {/* Integrations Panel */}
-      <IntegrationsPanel
-        initialApiKeys={apiKeys}
-        initialWebhookLogs={webhookLogs}
-      />
-    </div>
+    <IntegrationsPanel
+      initialApiKeys={apiKeys}
+      initialWebhookLogs={webhookLogs}
+    />
   );
 }

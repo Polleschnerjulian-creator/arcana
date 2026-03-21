@@ -89,22 +89,9 @@ export default async function InvoiceDesignPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">
-          Rechnungsdesign
-        </h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Logo, Bankverbindung, Farben und Fusszeile fuer Ihre Rechnungen anpassen
-        </p>
-      </div>
-
-      {/* Design Panel */}
-      <InvoiceDesignPanel
-        organization={data.organization}
-        initialSettings={data.invoiceSettings}
-      />
-    </div>
+    <InvoiceDesignPanel
+      organization={data.organization}
+      initialSettings={data.invoiceSettings}
+    />
   );
 }

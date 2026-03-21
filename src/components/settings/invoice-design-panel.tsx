@@ -305,7 +305,6 @@ export function InvoiceDesignPanel({
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // ── Update setting helper ──
   const updateSetting = useCallback(
@@ -327,18 +326,11 @@ export function InvoiceDesignPanel({
     [updateSetting]
   );
 
-  // ── Live preview update ──
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
+  // ── Live preview HTML (as srcdoc) ──
+  const [previewHtml, setPreviewHtml] = useState("");
 
-    const html = generatePreviewHTML(organization, settings);
-    const doc = iframe.contentDocument;
-    if (doc) {
-      doc.open();
-      doc.write(html);
-      doc.close();
-    }
+  useEffect(() => {
+    setPreviewHtml(generatePreviewHTML(organization, settings));
   }, [settings, organization]);
 
   // ── Logo upload ──
@@ -905,11 +897,11 @@ export function InvoiceDesignPanel({
             <CardContent>
               <div className="rounded-xl border border-[var(--glass-border)] overflow-hidden bg-white shadow-inner">
                 <iframe
-                  ref={iframeRef}
                   title="Rechnungsvorschau"
                   className="w-full border-0"
                   style={{ height: "680px" }}
                   sandbox="allow-same-origin"
+                  srcDoc={previewHtml}
                 />
               </div>
             </CardContent>
