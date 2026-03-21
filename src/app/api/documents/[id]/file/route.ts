@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { computeSHA256 } from "@/lib/compliance/hash";
 
 // ─── GET: Serve Document File ───────────────────────────────────
 
@@ -46,8 +47,30 @@ export async function GET(
           );
         }
 
-        const fileBuffer = await blobResponse.arrayBuffer();
-        return new NextResponse(fileBuffer, {
+        const buffer = Buffer.from(await blobResponse.arrayBuffer());
+
+        // GoBD: Verify document integrity by checking SHA-256 hash
+        if (document.sha256Hash) {
+          const currentHash = computeSHA256(buffer);
+
+          if (currentHash !== document.sha256Hash) {
+            console.error("[GoBD INTEGRITY VIOLATION]", {
+              documentId: document.id,
+              expectedHash: document.sha256Hash,
+              actualHash: currentHash,
+            });
+            return NextResponse.json(
+              {
+                success: false,
+                error:
+                  "Dokumentenintegritätsprüfung fehlgeschlagen. Der Beleg wurde möglicherweise verändert.",
+              },
+              { status: 500 }
+            );
+          }
+        }
+
+        return new NextResponse(buffer, {
           status: 200,
           headers: {
             "Content-Type": document.mimeType || "application/octet-stream",

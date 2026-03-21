@@ -1,13 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
+import { validateOrigin } from "@/lib/csrf";
 
 // ─── POST: Stornobuchung (Cancel a BOOKED Transaction) ─────────
 
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -17,6 +18,13 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: "Nicht authentifiziert." },
         { status: 401 }
+      );
+    }
+
+    if (!validateOrigin(request)) {
+      return NextResponse.json(
+        { success: false, error: "Ungültige Anfrage." },
+        { status: 403 }
       );
     }
 

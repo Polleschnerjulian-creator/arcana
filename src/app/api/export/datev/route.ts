@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateDATEV } from "@/lib/export/datev";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
+import { validateOrigin } from "@/lib/csrf";
 
 // ─── GET: DATEV Buchungsstapel Export ────────────────────────────
 
@@ -14,6 +15,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Nicht authentifiziert." },
         { status: 401 }
+      );
+    }
+
+    if (!validateOrigin(request)) {
+      return NextResponse.json(
+        { success: false, error: "Ungültige Anfrage." },
+        { status: 403 }
       );
     }
 

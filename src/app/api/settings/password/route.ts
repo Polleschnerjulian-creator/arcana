@@ -14,7 +14,7 @@ const changePasswordSchema = z.object({
     .min(1, "Aktuelles Passwort ist erforderlich."),
   newPassword: z
     .string()
-    .min(8, "Neues Passwort muss mindestens 8 Zeichen lang sein."),
+    .min(12, "Neues Passwort muss mindestens 12 Zeichen lang sein."),
 });
 
 // ─── PATCH: Change password ─────────────────────────────────────

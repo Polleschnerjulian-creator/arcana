@@ -7,7 +7,7 @@ import { rateLimit } from "@/lib/rate-limit";
 const registerSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse."),
   name: z.string().min(2, "Name muss mindestens 2 Zeichen lang sein."),
-  password: z.string().min(8, "Passwort muss mindestens 8 Zeichen lang sein."),
+  password: z.string().min(12, "Passwort muss mindestens 12 Zeichen lang sein."),
   organizationName: z.string().min(2, "Firmenname muss mindestens 2 Zeichen lang sein."),
   legalForm: z.enum(["EU", "GmbH", "UG", "AG", "OHG", "KG", "GbR", "FreiBeruf"]),
 });

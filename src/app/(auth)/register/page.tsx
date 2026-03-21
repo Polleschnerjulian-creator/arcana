@@ -55,8 +55,8 @@ export default function RegisterPage() {
       errors.email = "Bitte geben Sie eine gueltige E-Mail-Adresse ein.";
     }
 
-    if (password.length < 8) {
-      errors.password = "Passwort muss mindestens 8 Zeichen lang sein.";
+    if (password.length < 12) {
+      errors.password = "Passwort muss mindestens 12 Zeichen lang sein.";
     }
 
     if (password !== passwordConfirm) {
@@ -254,7 +254,7 @@ export default function RegisterPage() {
             <Input
               label="Passwort"
               type="password"
-              placeholder="Mindestens 8 Zeichen"
+              placeholder="Mindestens 12 Zeichen"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               error={fieldErrors.password}
