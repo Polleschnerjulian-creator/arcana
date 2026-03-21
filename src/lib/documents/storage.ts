@@ -1,10 +1,16 @@
 import { put, del } from "@vercel/blob";
 import { computeSHA256 } from "@/lib/compliance/hash";
+import crypto from "crypto";
 
 /**
  * Speichert eine Datei in Vercel Blob Storage.
  * Erstellt einen organisationsspezifischen Pfad und generiert
- * einen eindeutigen Dateinamen mit Zeitstempel.
+ * einen eindeutigen Dateinamen mit kryptographisch zufälligem Präfix
+ * (statt vorhersehbarem Zeitstempel), um URLs unratbar zu machen.
+ *
+ * WICHTIG: Die Blob-URL wird in der DB gespeichert, aber NIEMALS
+ * direkt an den Client weitergegeben. Dateien werden ausschließlich
+ * über die authentifizierte API-Route /api/documents/[id]/file ausgeliefert.
  *
  * Benötigt die Umgebungsvariable BLOB_READ_WRITE_TOKEN auf Vercel.
  */
@@ -16,7 +22,9 @@ export async function saveDocument(
   // SHA-256-Hash für GoBD-Konformität berechnen
   const sha256Hash = computeSHA256(file);
 
-  const blobPath = `documents/${organizationId}/${Date.now()}-${fileName}`;
+  // Use crypto-random prefix instead of predictable Date.now()
+  const randomPrefix = crypto.randomBytes(16).toString("hex");
+  const blobPath = `documents/${organizationId}/${randomPrefix}-${fileName}`;
 
   const blob = await put(blobPath, file, {
     access: "public",
@@ -30,8 +38,9 @@ export async function saveDocument(
 }
 
 /**
- * Gibt die URL eines gespeicherten Dokuments zurück.
- * storagePath ist jetzt direkt die Vercel Blob URL.
+ * Gibt die interne Blob-URL eines gespeicherten Dokuments zurück.
+ * WICHTIG: Diese URL darf NICHT direkt an den Client weitergegeben werden.
+ * Clients müssen über /api/documents/[id]/file zugreifen (authentifiziert).
  */
 export function getDocumentUrl(storagePath: string): string {
   return storagePath;

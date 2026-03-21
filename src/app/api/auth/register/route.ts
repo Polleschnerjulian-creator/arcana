@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { rateLimit } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse."),
@@ -46,6 +47,29 @@ const SKR03_DEFAULT_ACCOUNTS = [
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting: 5 attempts per IP per 15 minutes
+    const forwarded = request.headers.get("x-forwarded-for");
+    const realIp = request.headers.get("x-real-ip");
+    const ip = forwarded?.split(",")[0]?.trim() || realIp || "unknown";
+    const { success: rateLimitOk } = rateLimit(
+      `register:${ip}`,
+      5,
+      15 * 60 * 1000
+    );
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Zu viele Registrierungsversuche. Bitte versuchen Sie es später erneut.",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": "900" },
+        }
+      );
+    }
+
     const body = await request.json();
     const data = registerSchema.parse(body);
 

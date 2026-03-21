@@ -35,9 +35,33 @@ export async function GET(
       );
     }
 
-    // Blob-URL: Redirect direkt zur Cloud-Datei
+    // Proxy file through server to avoid exposing blob URLs to client
     if (document.storagePath.startsWith("http")) {
-      return NextResponse.redirect(document.storagePath);
+      try {
+        const blobResponse = await fetch(document.storagePath);
+        if (!blobResponse.ok) {
+          return NextResponse.json(
+            { success: false, error: "Datei konnte nicht geladen werden." },
+            { status: 502 }
+          );
+        }
+
+        const fileBuffer = await blobResponse.arrayBuffer();
+        return new NextResponse(fileBuffer, {
+          status: 200,
+          headers: {
+            "Content-Type": document.mimeType || "application/octet-stream",
+            "Content-Disposition": `inline; filename="${document.fileName}"`,
+            "Cache-Control": "private, max-age=3600",
+          },
+        });
+      } catch (fetchError) {
+        console.error("Error proxying document file:", fetchError);
+        return NextResponse.json(
+          { success: false, error: "Datei konnte nicht geladen werden." },
+          { status: 502 }
+        );
+      }
     }
 
     // Lokaler Pfad (Legacy): Datei nicht mehr verfügbar nach Migration
