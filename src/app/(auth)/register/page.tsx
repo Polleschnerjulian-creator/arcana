@@ -4,14 +4,14 @@ import * as React from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 
 const LEGAL_FORMS = [
   { value: "EU", label: "Einzelunternehmen" },
   { value: "GmbH", label: "GmbH" },
-  { value: "UG", label: "UG (haftungsbeschränkt)" },
+  { value: "UG", label: "UG (haftungsbeschraenkt)" },
   { value: "GbR", label: "GbR" },
   { value: "FreiBeruf", label: "Freiberufler" },
   { value: "OHG", label: "OHG" },
@@ -52,7 +52,7 @@ export default function RegisterPage() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      errors.email = "Bitte geben Sie eine gültige E-Mail-Adresse ein.";
+      errors.email = "Bitte geben Sie eine gueltige E-Mail-Adresse ein.";
     }
 
     if (password.length < 8) {
@@ -60,7 +60,7 @@ export default function RegisterPage() {
     }
 
     if (password !== passwordConfirm) {
-      errors.passwordConfirm = "Passwörter stimmen nicht überein.";
+      errors.passwordConfirm = "Passwoerter stimmen nicht ueberein.";
     }
 
     setFieldErrors(errors);
@@ -76,7 +76,7 @@ export default function RegisterPage() {
     }
 
     if (!legalForm) {
-      errors.legalForm = "Bitte wählen Sie eine Rechtsform aus.";
+      errors.legalForm = "Bitte waehlen Sie eine Rechtsform aus.";
     }
 
     setFieldErrors(errors);
@@ -159,75 +159,76 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        {/* Step indicator */}
-        <div className="mb-6 flex items-center justify-center gap-3">
-          <div className="flex items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
-                step === 1
-                  ? "bg-primary text-white"
-                  : "bg-primary/10 text-primary"
-              }`}
-            >
-              {step > 1 ? (
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              ) : (
-                "1"
-              )}
-            </div>
-            <span
-              className={`text-sm font-medium ${
-                step === 1 ? "text-text-primary" : "text-text-secondary"
-              }`}
-            >
-              Persönlich
-            </span>
-          </div>
+    <div className="animate-in">
+      {/* Subtitle below branding */}
+      <p className="text-center text-sm text-[var(--color-text-secondary)] -mt-4 mb-6">
+        Konto erstellen
+      </p>
 
-          <div className="h-px w-8 bg-border" />
-
-          <div className="flex items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
-                step === 2
-                  ? "bg-primary text-white"
-                  : "bg-gray-100 text-text-muted"
-              }`}
-            >
-              2
-            </div>
-            <span
-              className={`text-sm font-medium ${
-                step === 2 ? "text-text-primary" : "text-text-muted"
-              }`}
-            >
-              Unternehmen
-            </span>
+      {/* Step Indicator */}
+      <div className="flex items-center justify-center gap-0 mb-8">
+        {/* Step 1 */}
+        <div className="flex flex-col items-center">
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-all duration-300 ${
+              step === 1
+                ? "bg-primary/15 text-primary shadow-glow"
+                : "bg-primary text-white"
+            }`}
+          >
+            {step > 1 ? <Check className="h-4 w-4" /> : "1"}
           </div>
+          <span
+            className={`text-xs mt-1.5 font-medium transition-colors ${
+              step === 1 ? "text-[var(--color-text)]" : "text-[var(--color-text-secondary)]"
+            }`}
+          >
+            Persoenlich
+          </span>
         </div>
 
-        {error && (
-          <div className="mb-4 rounded-lg bg-danger-light border border-red-200 p-3 text-sm text-danger">
-            {error}
-          </div>
-        )}
+        {/* Connecting line */}
+        <div className="relative w-16 h-px mx-2 mb-5">
+          <div className="absolute inset-0 bg-gray-200 rounded-full" />
+          <div
+            className={`absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-500 ease-out ${
+              step > 1 ? "w-full" : "w-0"
+            }`}
+          />
+        </div>
 
+        {/* Step 2 */}
+        <div className="flex flex-col items-center">
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-all duration-300 ${
+              step === 2
+                ? "bg-primary/15 text-primary shadow-glow"
+                : "bg-gray-100 text-[var(--color-text-tertiary)]"
+            }`}
+          >
+            2
+          </div>
+          <span
+            className={`text-xs mt-1.5 font-medium transition-colors ${
+              step === 2 ? "text-[var(--color-text)]" : "text-[var(--color-text-tertiary)]"
+            }`}
+          >
+            Unternehmen
+          </span>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-5 rounded-xl bg-red-500/8 border border-red-200/30 p-3.5 text-sm text-red-500 flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {/* Step Content with transition */}
+      <div className="relative overflow-hidden">
         {step === 1 ? (
-          <form onSubmit={handleNext} className="space-y-4">
+          <form onSubmit={handleNext} className="space-y-5 animate-in" key="step1">
             <Input
               label="Name"
               type="text"
@@ -262,7 +263,7 @@ export default function RegisterPage() {
             />
 
             <Input
-              label="Passwort bestätigen"
+              label="Passwort bestaetigen"
               type="password"
               placeholder="Passwort wiederholen"
               value={passwordConfirm}
@@ -272,12 +273,15 @@ export default function RegisterPage() {
               autoComplete="new-password"
             />
 
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-glow active:scale-[0.98] transition-all duration-200"
+            >
               Weiter
             </Button>
           </form>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5 animate-in" key="step2">
             <Input
               label="Unternehmensname"
               type="text"
@@ -292,7 +296,7 @@ export default function RegisterPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="legalForm"
-                className="block text-sm font-medium text-text-primary"
+                className="block text-sm font-medium text-[var(--color-text)]"
               >
                 Rechtsform
               </label>
@@ -303,10 +307,10 @@ export default function RegisterPage() {
                   setLegalForm(e.target.value as LegalFormValue)
                 }
                 required
-                className="flex h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-xl bg-white/50 backdrop-blur-sm border border-white/50 px-3 py-2 text-sm text-[var(--color-text)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:shadow-glow disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="" disabled>
-                  Rechtsform wählen
+                  Rechtsform waehlen
                 </option>
                 {LEGAL_FORMS.map((form) => (
                   <option key={form.value} value={form.value}>
@@ -315,7 +319,7 @@ export default function RegisterPage() {
                 ))}
               </select>
               {fieldErrors.legalForm && (
-                <p className="text-sm text-danger">{fieldErrors.legalForm}</p>
+                <p className="text-sm text-red-500">{fieldErrors.legalForm}</p>
               )}
             </div>
 
@@ -323,15 +327,15 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 variant="secondary"
-                className="flex-1"
+                className="flex-1 bg-white/40 backdrop-blur-sm border-white/50 hover:bg-white/60 active:scale-[0.98] transition-all duration-200"
                 onClick={handleBack}
                 disabled={loading}
               >
-                Zurück
+                Zurueck
               </Button>
               <Button
                 type="submit"
-                className="flex-1"
+                className="flex-1 bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-glow active:scale-[0.98] transition-all duration-200"
                 disabled={loading}
               >
                 {loading ? "Registrieren..." : "Registrieren"}
@@ -339,17 +343,17 @@ export default function RegisterPage() {
             </div>
           </form>
         )}
+      </div>
 
-        <div className="mt-4 text-center text-sm text-text-secondary">
-          Bereits ein Konto?{" "}
-          <Link
-            href="/login"
-            className="text-primary hover:text-primary-hover font-medium"
-          >
-            Anmelden
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="mt-6 text-center text-sm text-[var(--color-text-secondary)]">
+        Bereits ein Konto?{" "}
+        <Link
+          href="/login"
+          className="text-primary hover:text-primary-dark font-medium transition-colors"
+        >
+          Anmelden
+        </Link>
+      </div>
+    </div>
   );
 }

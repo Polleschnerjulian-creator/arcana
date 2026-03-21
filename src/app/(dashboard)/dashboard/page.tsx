@@ -1,12 +1,4 @@
 import Link from "next/link";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
@@ -20,6 +12,10 @@ import {
   Building2,
   AlertCircle,
   ArrowRight,
+  DollarSign,
+  Receipt,
+  Landmark,
+  BarChart3,
 } from "lucide-react";
 
 // ─── Data Fetching ───────────────────────────────────────────────
@@ -176,7 +172,7 @@ async function getDashboardData(organizationId: string) {
       totalCredit: tx.lines.reduce((sum, l) => sum + Number(l.credit), 0),
       primaryAccount: tx.lines[0]?.account
         ? `${tx.lines[0].account.number} ${tx.lines[0].account.name}`
-        : "—",
+        : "\u2014",
     })),
     monthlyTrend,
   };
@@ -197,11 +193,20 @@ function calcTrend(current: number, previous: number): { value: string; positive
 
 // ─── Status Styling ──────────────────────────────────────────────
 
-const STATUS_BADGE: Record<string, { label: string; variant: "warning" | "success" | "danger" }> = {
-  DRAFT: { label: "Entwurf", variant: "warning" },
-  BOOKED: { label: "Gebucht", variant: "success" },
-  CANCELLED: { label: "Storniert", variant: "danger" },
+const STATUS_DOT: Record<string, { label: string; color: string }> = {
+  DRAFT: { label: "Entwurf", color: "bg-yellow-400" },
+  BOOKED: { label: "Gebucht", color: "bg-emerald-400" },
+  CANCELLED: { label: "Storniert", color: "bg-red-400" },
 };
+
+// ─── Time-based Greeting ─────────────────────────────────────────
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Morgen";
+  if (hour < 18) return "Tag";
+  return "Abend";
+}
 
 // ─── Page Component ──────────────────────────────────────────────
 
@@ -212,7 +217,9 @@ export default async function DashboardPage() {
   if (!organizationId) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-text-secondary">Keine Organisation zugeordnet.</p>
+        <div className="glass rounded-2xl p-8 text-center">
+          <p className="text-text-secondary">Keine Organisation zugeordnet.</p>
+        </div>
       </div>
     );
   }
@@ -228,333 +235,268 @@ export default async function DashboardPage() {
     1
   );
 
+  const userName = (session?.user as { name?: string })?.name || "Nutzer";
+  const firstName = userName.split(" ")[0];
+  const greeting = getGreeting();
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("de-DE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const kpiCards = [
+    {
+      label: "Einnahmen",
+      value: formatCurrency(data.revenue),
+      icon: DollarSign,
+      trend: revenueTrend,
+      trendInverted: false,
+      subtitle: "Laufender Monat",
+    },
+    {
+      label: "Ausgaben",
+      value: formatCurrency(data.expenses),
+      icon: Receipt,
+      trend: expensesTrend,
+      trendInverted: true,
+      subtitle: "Laufender Monat",
+    },
+    {
+      label: "Offene Belege",
+      value: data.openDocuments.toString(),
+      icon: FileText,
+      trend: data.openDocuments > 0 ? { value: "Zu bearbeiten", positive: false } : null,
+      trendInverted: false,
+      subtitle: "Ohne Buchung",
+    },
+    {
+      label: "Offene Bankposten",
+      value: data.unmatchedBankTx.toString(),
+      icon: Landmark,
+      trend: data.unmatchedBankTx > 0 ? { value: "Abzugleichen", positive: false } : null,
+      trendInverted: false,
+      subtitle: "Nicht zugeordnet",
+    },
+  ];
+
+  const quickActions = [
+    { label: "Beleg hochladen", icon: Upload, href: "/documents/upload" },
+    { label: "Neue Buchung", icon: ArrowLeftRight, href: "/transactions/new" },
+    { label: "Bank importieren", icon: Building2, href: "/bank/import" },
+    { label: "Berichte", icon: BarChart3, href: "/reports" },
+  ];
+
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Finanzuebersicht und aktuelle Kennzahlen
-        </p>
+      {/* Welcome Header */}
+      <div className="animate-in">
+        <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
+          Guten {greeting}, {firstName}
+        </h1>
+        <p className="text-sm text-text-secondary mt-1.5">{dateStr}</p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Einnahmen */}
-        <Card className="relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-success" />
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-text-secondary">
-              Einnahmen
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-text-primary font-mono tabular-nums">
-              {formatCurrency(data.revenue)}
-            </div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-text-muted">Laufender Monat</span>
-              {revenueTrend && (
-                <span className="inline-flex items-center gap-0.5 text-xs font-medium text-success">
-                  <TrendingUp className="h-3 w-3" />
-                  {revenueTrend.value}
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {kpiCards.map((card, i) => {
+          const Icon = card.icon;
+          const isPositive = card.trend?.positive ?? true;
+          const showTrendArrow =
+            card.trend && card.trend.value.includes("%");
 
-        {/* Ausgaben */}
-        <Card className="relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-danger" />
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-text-secondary">
-              Ausgaben
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-text-primary font-mono tabular-nums">
-              {formatCurrency(data.expenses)}
+          return (
+            <div
+              key={card.label}
+              className={`glass glass-hover rounded-2xl p-5 animate-in delay-${i + 1}`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+                  <Icon className="h-4.5 w-4.5 text-primary" />
+                </div>
+                {card.trend && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      card.trendInverted
+                        ? isPositive
+                          ? "bg-red-500/10 text-red-500"
+                          : "bg-emerald-500/10 text-emerald-500"
+                        : isPositive
+                        ? "bg-emerald-500/10 text-emerald-500"
+                        : "bg-amber-500/10 text-amber-500"
+                    }`}
+                  >
+                    {showTrendArrow &&
+                      (isPositive ? (
+                        <TrendingUp className="h-3 w-3" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3" />
+                      ))}
+                    {!showTrendArrow && <AlertCircle className="h-3 w-3" />}
+                    {card.trend.value}
+                  </span>
+                )}
+              </div>
+              <div className="text-3xl font-semibold tracking-tight text-text-primary">
+                {card.value}
+              </div>
+              <p className="text-sm text-text-secondary mt-1">{card.subtitle}</p>
             </div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-text-muted">Laufender Monat</span>
-              {expensesTrend && (
-                <span
-                  className={`inline-flex items-center gap-0.5 text-xs font-medium ${
-                    expensesTrend.positive ? "text-danger" : "text-success"
-                  }`}
-                >
-                  {expensesTrend.positive ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" />
-                  )}
-                  {expensesTrend.value}
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          );
+        })}
+      </div>
 
-        {/* Offene Belege */}
-        <Card className="relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-warning" />
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-text-secondary">
-              Offene Belege
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-text-primary">
-              {data.openDocuments}
-            </div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-text-muted">Ohne Buchung</span>
-              {data.openDocuments > 0 && (
-                <span className="inline-flex items-center gap-0.5 text-xs font-medium text-warning">
-                  <AlertCircle className="h-3 w-3" />
-                  Zu bearbeiten
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Offene Bankposten */}
-        <Card className="relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-info" />
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-text-secondary">
-              Offene Bankposten
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-text-primary">
-              {data.unmatchedBankTx}
-            </div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-text-muted">Nicht zugeordnet</span>
-              {data.unmatchedBankTx > 0 && (
-                <span className="inline-flex items-center gap-0.5 text-xs font-medium text-info">
-                  <AlertCircle className="h-3 w-3" />
-                  Abzugleichen
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Quick Actions */}
+      <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 animate-in delay-5`}>
+        {quickActions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <Link key={action.label} href={action.href}>
+              <div className="glass glass-hover rounded-2xl p-5 flex flex-col items-center gap-3 text-center cursor-pointer group transition-transform duration-200 hover:scale-[1.02]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-glow group-hover:shadow-glow-lg transition-shadow duration-200">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <span className="text-sm font-medium text-text-primary">{action.label}</span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Trend Chart */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Einnahmen vs. Ausgaben</CardTitle>
-              <span className="text-xs text-text-muted">Letzte 6 Monate</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Legend */}
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm bg-success" />
-                <span className="text-xs text-text-secondary">Einnahmen</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm bg-danger" />
-                <span className="text-xs text-text-secondary">Ausgaben</span>
-              </div>
-            </div>
+        <div className="glass rounded-2xl p-6 animate-in delay-5">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-text-primary">
+              Einnahmen vs. Ausgaben
+            </h2>
+            <span className="text-xs text-text-secondary">Letzte 6 Monate</span>
+          </div>
 
-            {/* Bar Chart */}
-            <div className="flex items-end gap-3 h-48">
-              {data.monthlyTrend.map((month) => {
-                const revHeight = chartMax > 0 ? (month.revenue / chartMax) * 100 : 0;
-                const expHeight = chartMax > 0 ? (month.expenses / chartMax) * 100 : 0;
+          {/* Legend as pills */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-xs font-medium text-emerald-600">Einnahmen</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-200/60 px-2.5 py-1">
+              <div className="w-2 h-2 rounded-full bg-gray-400" />
+              <span className="text-xs font-medium text-gray-500">Ausgaben</span>
+            </div>
+          </div>
 
-                return (
-                  <div key={month.month} className="flex-1 flex flex-col items-center gap-1">
-                    {/* Bars */}
-                    <div className="flex items-end gap-1 w-full h-40">
-                      <div className="flex-1 flex flex-col justify-end">
-                        <div
-                          className="w-full rounded-t bg-success/80 hover:bg-success transition-colors min-h-[2px]"
-                          style={{ height: `${Math.max(revHeight, 1)}%` }}
-                          title={`Einnahmen: ${formatCurrency(month.revenue)}`}
-                        />
-                      </div>
-                      <div className="flex-1 flex flex-col justify-end">
-                        <div
-                          className="w-full rounded-t bg-danger/80 hover:bg-danger transition-colors min-h-[2px]"
-                          style={{ height: `${Math.max(expHeight, 1)}%` }}
-                          title={`Ausgaben: ${formatCurrency(month.expenses)}`}
-                        />
-                      </div>
+          {/* Bar Chart */}
+          <div className="flex items-end gap-3 h-48">
+            {data.monthlyTrend.map((month) => {
+              const revHeight = chartMax > 0 ? (month.revenue / chartMax) * 100 : 0;
+              const expHeight = chartMax > 0 ? (month.expenses / chartMax) * 100 : 0;
+
+              return (
+                <div key={month.month} className="flex-1 flex flex-col items-center gap-1.5">
+                  <div className="flex items-end gap-1 w-full h-40">
+                    <div className="flex-1 flex flex-col justify-end">
+                      <div
+                        className="w-full rounded-t-md bg-emerald-500/80 hover:bg-emerald-500 transition-all duration-200 min-h-[2px]"
+                        style={{ height: `${Math.max(revHeight, 1)}%` }}
+                        title={`Einnahmen: ${formatCurrency(month.revenue)}`}
+                      />
                     </div>
-
-                    {/* Month label */}
-                    <span className="text-xs text-text-muted font-medium">{month.label}</span>
+                    <div className="flex-1 flex flex-col justify-end">
+                      <div
+                        className="w-full rounded-t-md bg-gray-300/80 hover:bg-gray-400 transition-all duration-200 min-h-[2px]"
+                        style={{ height: `${Math.max(expHeight, 1)}%` }}
+                        title={`Ausgaben: ${formatCurrency(month.expenses)}`}
+                      />
+                    </div>
                   </div>
-                );
-              })}
+                  <span className="text-xs text-text-secondary font-medium">{month.label}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Summary */}
+          <div className="mt-5 pt-4 border-t border-white/20 grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-text-secondary">Gesamt (6 Mo.)</p>
+              <p className="text-sm font-semibold text-emerald-500 font-mono tabular-nums mt-0.5">
+                {formatCurrency(data.monthlyTrend.reduce((s, m) => s + m.revenue, 0))}
+              </p>
             </div>
-
-            {/* Summary row under chart */}
-            <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-text-muted">Gesamteinnahmen (6 Mo.)</p>
-                <p className="text-sm font-semibold text-success font-mono tabular-nums">
-                  {formatCurrency(data.monthlyTrend.reduce((s, m) => s + m.revenue, 0))}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-text-muted">Gesamtausgaben (6 Mo.)</p>
-                <p className="text-sm font-semibold text-danger font-mono tabular-nums">
-                  {formatCurrency(data.monthlyTrend.reduce((s, m) => s + m.expenses, 0))}
-                </p>
-              </div>
+            <div>
+              <p className="text-xs text-text-secondary">Gesamt (6 Mo.)</p>
+              <p className="text-sm font-semibold text-gray-500 font-mono tabular-nums mt-0.5">
+                {formatCurrency(data.monthlyTrend.reduce((s, m) => s + m.expenses, 0))}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Schnellzugriff</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Link href="/documents/upload" className="block">
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:bg-primary-50 transition-all group cursor-pointer">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-light text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  <Upload className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary">Beleg hochladen</p>
-                  <p className="text-xs text-text-muted">Rechnung oder Quittung erfassen</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-primary transition-colors" />
-              </div>
-            </Link>
-
-            <Link href="/transactions/new" className="block">
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:bg-primary-50 transition-all group cursor-pointer">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-light text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  <ArrowLeftRight className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary">Neue Buchung</p>
-                  <p className="text-xs text-text-muted">Manuelle Buchung erstellen</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-primary transition-colors" />
-              </div>
-            </Link>
-
-            <Link href="/bank/import" className="block">
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:bg-primary-50 transition-all group cursor-pointer">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-light text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  <Building2 className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary">Bank importieren</p>
-                  <p className="text-xs text-text-muted">CSV- oder MT940-Datei laden</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-primary transition-colors" />
-              </div>
-            </Link>
-
-            <Link href="/reports" className="block">
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:bg-primary-50 transition-all group cursor-pointer">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-light text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  <FileText className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary">Berichte erstellen</p>
-                  <p className="text-xs text-text-muted">EUeR, BWA oder DATEV-Export</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-primary transition-colors" />
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Letzte Buchungen</CardTitle>
-            <Link href="/transactions">
-              <Button variant="ghost" size="sm">
-                Alle anzeigen
-                <ArrowRight className="h-3.5 w-3.5 ml-1" />
-              </Button>
+        {/* Recent Transactions */}
+        <div className="glass rounded-2xl overflow-hidden animate-in delay-6">
+          <div className="flex items-center justify-between px-6 pt-6 pb-4">
+            <h2 className="text-base font-semibold text-text-primary">Letzte Buchungen</h2>
+            <Link
+              href="/transactions"
+              className="text-xs font-medium text-primary hover:text-primary-dark transition-colors inline-flex items-center gap-1"
+            >
+              Alle anzeigen
+              <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+
           {data.recentTransactions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-text-secondary">
-              <ArrowLeftRight className="h-8 w-8 mb-2 text-text-muted" />
-              <p className="text-sm">Noch keine Buchungen vorhanden</p>
+            <div className="flex flex-col items-center justify-center py-12 px-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100/80 mb-3">
+                <ArrowLeftRight className="h-5 w-5 text-text-secondary" />
+              </div>
+              <p className="text-sm text-text-secondary">Noch keine Buchungen vorhanden</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-t border-border bg-gray-50/50">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                      Datum
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                      Beschreibung
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                      Konto
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
-                      Betrag
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {data.recentTransactions.map((tx) => {
-                    const statusConfig = STATUS_BADGE[tx.status] ?? {
-                      label: tx.status,
-                      variant: "default" as const,
-                    };
-                    return (
-                      <tr key={tx.id} className="hover:bg-gray-50/80 transition-colors">
-                        <td className="px-6 py-3.5 text-sm text-text-primary whitespace-nowrap">
-                          {formatDate(tx.date)}
-                        </td>
-                        <td className="px-6 py-3.5 text-sm text-text-primary max-w-xs truncate">
-                          {tx.description}
-                        </td>
-                        <td className="px-6 py-3.5 text-sm text-text-secondary whitespace-nowrap font-mono">
-                          {tx.primaryAccount}
-                        </td>
-                        <td className="px-6 py-3.5 text-sm font-mono tabular-nums text-right text-text-primary whitespace-nowrap">
-                          {formatCurrency(tx.totalDebit)}
-                        </td>
-                        <td className="px-6 py-3.5 text-center">
-                          <Badge variant={statusConfig.variant}>
-                            {statusConfig.label}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="px-6 pb-6">
+              <div className="space-y-0.5">
+                {data.recentTransactions.map((tx, i) => {
+                  const statusConfig = STATUS_DOT[tx.status] ?? {
+                    label: tx.status,
+                    color: "bg-gray-400",
+                  };
+                  return (
+                    <div
+                      key={tx.id}
+                      className={`flex items-center gap-4 py-3.5 ${
+                        i < data.recentTransactions.length - 1
+                          ? "border-b border-white/15"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div
+                          className={`h-2 w-2 rounded-full flex-shrink-0 ${statusConfig.color}`}
+                          title={statusConfig.label}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-text-primary truncate">
+                            {tx.description}
+                          </p>
+                          <p className="text-xs text-text-secondary mt-0.5">
+                            {formatDate(tx.date)} &middot; {tx.primaryAccount}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-mono tabular-nums text-text-primary font-medium whitespace-nowrap">
+                        {formatCurrency(tx.totalDebit)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

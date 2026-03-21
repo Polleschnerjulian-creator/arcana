@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -45,55 +44,59 @@ function LoginForm() {
   }
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="rounded-lg bg-danger-light border border-red-200 p-3 text-sm text-danger">
-              {error}
-            </div>
-          )}
+    <div className="animate-in">
+      {/* Subtitle below branding */}
+      <p className="text-center text-sm text-[var(--color-text-secondary)] -mt-4 mb-8">
+        Willkommen zurueck
+      </p>
 
-          <Input
-            label="E-Mail"
-            type="email"
-            placeholder="name@unternehmen.de"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <div className="rounded-xl bg-red-500/8 border border-red-200/30 p-3.5 text-sm text-red-500 flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0" />
+            {error}
+          </div>
+        )}
 
-          <Input
-            label="Passwort"
-            type="password"
-            placeholder="Passwort eingeben"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
+        <Input
+          label="E-Mail"
+          type="email"
+          placeholder="name@unternehmen.de"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+        />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? "Anmelden..." : "Anmelden"}
-          </Button>
-        </form>
+        <Input
+          label="Passwort"
+          type="password"
+          placeholder="Passwort eingeben"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+        />
 
-        <div className="mt-4 text-center text-sm text-text-secondary">
-          Noch kein Konto?{" "}
-          <Link
-            href="/register"
-            className="text-primary hover:text-primary-hover font-medium"
-          >
-            Registrieren
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+        <Button
+          type="submit"
+          className="w-full bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-glow active:scale-[0.98] transition-all duration-200"
+          disabled={loading}
+        >
+          {loading ? "Anmelden..." : "Anmelden"}
+        </Button>
+      </form>
+
+      <div className="mt-6 text-center text-sm text-[var(--color-text-secondary)]">
+        Noch kein Konto?{" "}
+        <Link
+          href="/register"
+          className="text-primary hover:text-primary-dark font-medium transition-colors"
+        >
+          Registrieren
+        </Link>
+      </div>
+    </div>
   );
 }
 

@@ -3,38 +3,32 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <html lang="de">
-      <body className="font-sans antialiased bg-[#FAFAF9] text-[#1C1917]">
+      <body className="font-sans antialiased bg-[#F5F5F7] text-[#1D1D1F]">
         <div className="flex items-center justify-center min-h-screen px-4">
           <div className="max-w-md w-full text-center">
-            {/* Logo */}
-            <div className="flex items-center justify-center gap-2 mb-10">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0D9488] text-white font-bold text-lg">
-                A
-              </div>
-              <span className="text-xl font-semibold tracking-tight">
-                ARCANA
-              </span>
-            </div>
-
-            {/* 404 */}
-            <div className="mb-6">
-              <span className="text-7xl font-bold tracking-tight text-[#E7E5E4]">
+            {/* 404 Number */}
+            <div className="mb-8 animate-float">
+              <span className="text-8xl font-extralight tracking-tight text-[#86868B]/40 select-none">
                 404
               </span>
             </div>
 
             {/* Message */}
-            <h1 className="text-xl font-semibold mb-2">
+            <h1 className="text-xl font-semibold text-[#1D1D1F] mb-2">
               Seite nicht gefunden
             </h1>
-            <p className="text-sm text-[#78716C] mb-8">
+            <p className="text-sm text-[#86868B] mb-10 max-w-xs mx-auto leading-relaxed">
               Die angeforderte Seite existiert nicht oder wurde verschoben.
             </p>
 
-            {/* Action */}
+            {/* Glass Button */}
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center font-medium transition-colors rounded-lg bg-[#0D9488] text-white hover:bg-[#0F766E] h-10 px-6 text-sm gap-2"
+              className="inline-flex items-center justify-center gap-2 h-11 px-8 text-sm font-medium rounded-2xl text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: "linear-gradient(135deg, #0D9488, #0F766E)",
+                boxShadow: "0 0 20px rgba(13, 148, 136, 0.15), 0 2px 8px rgba(0, 0, 0, 0.06)",
+              }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -54,6 +48,16 @@ export default function NotFound() {
             </Link>
           </div>
         </div>
+
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+          }
+          .animate-float {
+            animation: float 3s ease-in-out infinite;
+          }
+        `}} />
       </body>
     </html>
   );

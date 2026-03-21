@@ -17,18 +17,25 @@ import {
   ChevronLeft,
   LogOut,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navigation = [
+const mainNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Buchungen", href: "/transactions", icon: ArrowLeftRight },
   { name: "Belege", href: "/documents", icon: FileText },
   { name: "Bank", href: "/bank", icon: Building2 },
   { name: "Rechnungen", href: "/invoices", icon: Receipt },
+];
+
+const secondaryNavigation = [
   { name: "Berichte", href: "/reports", icon: BarChart3 },
   { name: "Kontenplan", href: "/accounts", icon: BookOpen },
   { name: "Steuer", href: "/tax", icon: Calculator },
+];
+
+const settingsNavigation = [
   { name: "Einstellungen", href: "/settings", icon: Settings },
 ];
 
@@ -61,137 +68,163 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         .slice(0, 2)
     : "??";
 
+  function renderNavItem(item: { name: string; href: string; icon: LucideIcon }) {
+    const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+    const Icon = item.icon;
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={cn(
+          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ease-out min-h-[44px] md:min-h-0",
+          isActive
+            ? "bg-[rgba(13,148,136,0.1)] text-primary font-medium shadow-[inset_0_0_0_1px_rgba(13,148,136,0.12)]"
+            : "text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.5)] hover:text-[var(--color-text)]",
+          collapsed && "md:justify-center md:px-2"
+        )}
+        title={collapsed ? item.name : undefined}
+      >
+        <Icon
+          className={cn(
+            "h-5 w-5 flex-shrink-0 transition-colors duration-200",
+            isActive ? "text-primary" : "text-[var(--color-text-tertiary)] group-hover:text-[var(--color-text-secondary)]"
+          )}
+          strokeWidth={1.5}
+        />
+        {/* Mobile: always show label. Desktop: hide when collapsed */}
+        <span
+          className={cn(
+            "transition-opacity duration-200",
+            collapsed && "md:hidden"
+          )}
+        >
+          {item.name}
+        </span>
+      </Link>
+    );
+  }
+
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="flex h-14 items-center justify-between px-4 border-b border-border">
+      <div className={cn(
+        "flex h-16 items-center justify-between px-4",
+        collapsed && "md:px-2"
+      )}>
         {/* Mobile: always show full logo with close button */}
         <div className="md:hidden flex items-center justify-between w-full">
-          <Link href="/dashboard" className="flex items-center gap-2" onClick={onMobileClose}>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-bold text-sm">
-              A
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-text-primary">
-              ARCANA
+          <Link href="/dashboard" className="flex items-center gap-2.5" onClick={onMobileClose}>
+            <span className="text-xl font-semibold tracking-tight">
+              <span className="bg-gradient-to-br from-primary to-teal-400 bg-clip-text text-transparent">A</span>
+              <span className="text-[var(--color-text)]">RCANA</span>
             </span>
           </Link>
           <button
             onClick={onMobileClose}
-            className="flex h-11 w-11 items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-gray-100 transition-colors -mr-2"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.4)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[rgba(255,255,255,0.6)] transition-all duration-200 -mr-1"
             aria-label="Menue schliessen"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4.5 w-4.5" strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Desktop: existing collapse logic */}
+        {/* Desktop: collapse logic */}
         <div className="hidden md:flex items-center justify-between w-full">
-          {!collapsed && (
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-bold text-sm">
+          <Link href="/dashboard" className={cn(
+            "flex items-center transition-all duration-300",
+            collapsed ? "mx-auto" : "gap-2.5"
+          )}>
+            {collapsed ? (
+              <span className="text-lg font-bold bg-gradient-to-br from-primary to-teal-400 bg-clip-text text-transparent">
                 A
-              </div>
-              <span className="text-lg font-semibold tracking-tight text-text-primary">
-                ARCANA
               </span>
-            </Link>
-          )}
-          {collapsed && (
-            <Link href="/dashboard" className="mx-auto">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-bold text-sm">
-                A
-              </div>
-            </Link>
-          )}
-          {!collapsed && (
-            <button
-              onClick={onToggle}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-gray-100 transition-colors"
-              aria-label="Sidebar einklappen"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-          )}
+            ) : (
+              <span className="text-xl font-semibold tracking-tight">
+                <span className="bg-gradient-to-br from-primary to-teal-400 bg-clip-text text-transparent">A</span>
+                <span className="text-[var(--color-text)]">RCANA</span>
+              </span>
+            )}
+          </Link>
         </div>
       </div>
 
-      {/* Expand button when collapsed (desktop only) */}
-      {collapsed && (
-        <div className="hidden md:flex justify-center py-2">
-          <button
-            onClick={onToggle}
-            className="flex h-6 w-6 items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-gray-100 transition-colors"
-            aria-label="Sidebar ausklappen"
-          >
-            <ChevronLeft className="h-4 w-4 rotate-180" />
-          </button>
-        </div>
-      )}
-
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-        {navigation.map((item) => {
-          const isActive =
-            pathname === item.href || pathname?.startsWith(item.href + "/");
-          const Icon = item.icon;
+      <nav className="flex-1 overflow-y-auto px-3 pt-2 pb-3">
+        {/* Main navigation */}
+        <div className="space-y-0.5">
+          {mainNavigation.map(renderNavItem)}
+        </div>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 md:py-2 text-sm font-medium transition-colors min-h-[44px] md:min-h-0",
-                isActive
-                  ? "bg-primary-50 text-primary"
-                  : "text-text-secondary hover:bg-gray-50 hover:text-text-primary",
-                collapsed && "md:justify-center md:px-2"
-              )}
-              title={collapsed ? item.name : undefined}
-            >
-              <Icon
-                className={cn(
-                  "h-5 w-5 flex-shrink-0",
-                  isActive ? "text-primary" : "text-text-muted"
-                )}
-              />
-              {/* Mobile: always show label. Desktop: hide when collapsed */}
-              <span className={cn(collapsed && "md:hidden")}>
-                {item.name}
-              </span>
-            </Link>
-          );
-        })}
+        {/* Separator */}
+        <div className={cn("my-3", collapsed ? "md:mx-2" : "mx-3")}>
+          <div className="h-px bg-[rgba(0,0,0,0.06)]" />
+        </div>
+
+        {/* Secondary navigation */}
+        <div className="space-y-0.5">
+          {secondaryNavigation.map(renderNavItem)}
+        </div>
+
+        {/* Separator */}
+        <div className={cn("my-3", collapsed ? "md:mx-2" : "mx-3")}>
+          <div className="h-px bg-[rgba(0,0,0,0.06)]" />
+        </div>
+
+        {/* Settings */}
+        <div className="space-y-0.5">
+          {settingsNavigation.map(renderNavItem)}
+        </div>
       </nav>
 
+      {/* Collapse toggle button (desktop only) */}
+      <div className="hidden md:flex justify-center pb-2">
+        <button
+          onClick={onToggle}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(255,255,255,0.5)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.7)] transition-all duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+          aria-label={collapsed ? "Sidebar ausklappen" : "Sidebar einklappen"}
+        >
+          <ChevronLeft
+            className={cn(
+              "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+              collapsed && "rotate-180"
+            )}
+            strokeWidth={1.5}
+          />
+        </button>
+      </div>
+
       {/* User section */}
-      <div className="border-t border-border p-3">
+      <div className="p-3">
         <div
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2",
-            collapsed && "md:justify-center md:px-0"
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 bg-[rgba(255,255,255,0.45)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5),0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-200",
+            collapsed && "md:justify-center md:px-2"
           )}
         >
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-light text-primary text-xs font-semibold">
+          {/* Gradient initials avatar */}
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-teal-400 text-white text-xs font-semibold shadow-[0_2px_8px_rgba(13,148,136,0.25)]">
             {userInitials}
           </div>
           {/* Mobile: always show. Desktop: hide when collapsed */}
           <div className={cn("flex-1 min-w-0", collapsed && "md:hidden")}>
-            <p className="text-sm font-medium text-text-primary truncate">
+            <p className="text-sm font-medium text-[var(--color-text)] truncate">
               {session?.user?.name || "Benutzer"}
             </p>
-            <p className="text-xs text-text-muted truncate">
+            <p className="text-xs text-[var(--color-text-tertiary)] truncate">
               {session?.user?.email || ""}
             </p>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className={cn(
-              "flex h-11 w-11 md:h-8 md:w-8 items-center justify-center rounded-md text-text-muted hover:text-danger hover:bg-danger-light transition-colors",
+              "flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)] transition-all duration-200",
               collapsed && "md:hidden"
             )}
             aria-label="Abmelden"
+            title="Abmelden"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4" strokeWidth={1.5} />
           </button>
         </div>
       </div>
@@ -201,21 +234,30 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   return (
     <>
       {/* Mobile Backdrop */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm md:hidden"
-          onClick={onMobileClose}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 md:hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          mobileOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        )}
+        onClick={onMobileClose}
+        aria-hidden="true"
+        style={{
+          background: "rgba(0, 0, 0, 0.25)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+        }}
+      />
 
       {/* Sidebar */}
       <aside
         className={cn(
           // Base styles
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface transition-transform duration-300 ease-in-out",
-          // Mobile: full-width overlay, slide in/out
-          "w-[280px] md:w-auto md:transition-all md:duration-200",
+          "fixed inset-y-0 left-0 z-50 flex flex-col glass-sidebar",
+          // Mobile: fixed width, slide in/out with cubic-bezier
+          "w-[280px] md:w-auto",
+          "transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           mobileOpen
             ? "translate-x-0"
             : "-translate-x-full",
