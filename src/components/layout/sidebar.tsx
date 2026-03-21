@@ -16,6 +16,7 @@ import {
   Settings,
   Plug,
   Repeat,
+  ShoppingBag,
   ChevronLeft,
   LogOut,
   X,
@@ -82,6 +83,7 @@ const settingsNavigation = [
   { name: "Einstellungen", href: "/settings", icon: Settings },
   { name: "Dauerauftraege", href: "/settings/recurring", icon: Repeat },
   { name: "Integrationen", href: "/settings/integrations", icon: Plug },
+  { name: "Shopify", href: "/settings/shopify", icon: ShoppingBag },
 ];
 
 interface SidebarProps {

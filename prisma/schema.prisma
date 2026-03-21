@@ -37,6 +37,7 @@ model Organization {
   webhookLogs       WebhookLog[]
   recurringTemplates RecurringTemplate[]
   categorizationRules CategorizationRule[]
+  shopifyConnection ShopifyConnection?
 }
 
 model User {
@@ -352,5 +353,38 @@ model CategorizationRule {
   organization    Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([organizationId, vendorPattern])
+  @@index([organizationId])
+}
+
+// ─── Shopify Integration ──────────────────────────────────────────
+
+model ShopifyConnection {
+  id              String   @id @default(cuid())
+  organizationId  String   @unique
+  shopDomain      String   // e.g., "myshop.myshopify.com"
+  webhookSecret   String   // HMAC secret for verifying webhooks
+  defaultTaxRate  Float    @default(19) // Default tax rate for orders
+  isActive        Boolean  @default(true)
+  ordersProcessed Int      @default(0)
+  lastOrderAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+}
+
+model ShopifyOrder {
+  id              String   @id @default(cuid())
+  organizationId  String
+  shopifyOrderId  String   // Shopify's order ID (e.g., "5678901234")
+  shopifyOrderNumber String // Display number (e.g., "#1001")
+  invoiceId       String?  // Linked ARCANA invoice
+  transactionId   String?  // Linked ARCANA transaction
+  status          String   @default("PROCESSED") // PROCESSED | REFUNDED | PARTIAL_REFUND
+  orderTotal      Decimal
+  currency        String   @default("EUR")
+  processedAt     DateTime @default(now())
+
+  @@unique([organizationId, shopifyOrderId])
   @@index([organizationId])
 }
