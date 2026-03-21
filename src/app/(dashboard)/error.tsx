@@ -20,13 +20,9 @@ export default function DashboardError({
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="max-w-md w-full text-center">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white font-bold text-lg">
-            A
-          </div>
-          <span className="text-xl font-semibold tracking-tight text-text-primary">
-            ARCANA
-          </span>
+        <div className="flex items-center justify-center mb-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/arcana-logo.png" alt="ARCANA" className="h-10" />
         </div>
 
         {/* Error Icon */}

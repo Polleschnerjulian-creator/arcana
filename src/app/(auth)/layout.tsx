@@ -57,12 +57,10 @@ export default function AuthLayout({
             }}
           >
             {/* ARCANA Branding */}
-            <div className="mb-8 text-center">
-              <h1 className="text-3xl font-semibold tracking-tight">
-                <span className="bg-gradient-to-br from-primary to-teal-400 bg-clip-text text-transparent">A</span>
-                <span className="text-[var(--color-text)]">RCANA</span>
-              </h1>
-              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+            <div className="mb-8 flex flex-col items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/arcana-logo.png" alt="ARCANA" className="h-10 mb-3" />
+              <p className="text-sm text-[var(--color-text-secondary)]">
                 AI-native Buchhaltung
               </p>
             </div>

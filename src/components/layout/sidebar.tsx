@@ -114,11 +114,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       )}>
         {/* Mobile: always show full logo with close button */}
         <div className="md:hidden flex items-center justify-between w-full">
-          <Link href="/dashboard" className="flex items-center gap-2.5" onClick={onMobileClose}>
-            <span className="text-xl font-semibold tracking-tight">
-              <span className="bg-gradient-to-br from-primary to-teal-400 bg-clip-text text-transparent">A</span>
-              <span className="text-[var(--color-text)]">RCANA</span>
-            </span>
+          <Link href="/dashboard" className="flex items-center" onClick={onMobileClose}>
+            <img src="/arcana-logo.png" alt="ARCANA" className="h-7" />
           </Link>
           <button
             onClick={onMobileClose}
@@ -136,14 +133,9 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
             collapsed ? "mx-auto" : "gap-2.5"
           )}>
             {collapsed ? (
-              <span className="text-lg font-bold bg-gradient-to-br from-primary to-teal-400 bg-clip-text text-transparent">
-                A
-              </span>
+              <img src="/arcana-logo.png" alt="ARCANA" className="h-6 w-6 object-contain object-left" />
             ) : (
-              <span className="text-xl font-semibold tracking-tight">
-                <span className="bg-gradient-to-br from-primary to-teal-400 bg-clip-text text-transparent">A</span>
-                <span className="text-[var(--color-text)]">RCANA</span>
-              </span>
+              <img src="/arcana-logo.png" alt="ARCANA" className="h-7" />
             )}
           </Link>
         </div>
