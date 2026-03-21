@@ -137,8 +137,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         className={cn(
           "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ease-out min-h-[44px] md:min-h-0",
           isActive
-            ? "bg-black/[0.06] text-[#1D1D1F] font-medium shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
-            : "text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.5)] hover:text-[var(--color-text)]",
+            ? "bg-black/[0.06] dark:bg-white/[0.08] text-[var(--color-text)] font-medium shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+            : "text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.5)] dark:hover:bg-[rgba(255,255,255,0.06)] hover:text-[var(--color-text)]",
           collapsed && "md:justify-center md:px-2"
         )}
         title={collapsed ? item.name : undefined}
@@ -147,7 +147,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           <Icon
             className={cn(
               "h-5 w-5 transition-colors duration-200",
-              isActive ? "text-primary" : "text-[var(--color-text-tertiary)] group-hover:text-[var(--color-text-secondary)]"
+              isActive ? "text-[var(--color-text)]" : "text-[var(--color-text-tertiary)] group-hover:text-[var(--color-text-secondary)]"
             )}
             strokeWidth={1.5}
           />
@@ -194,7 +194,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           </Link>
           <button
             onClick={onMobileClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.4)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[rgba(255,255,255,0.6)] transition-all duration-200 -mr-1"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--glass-bg)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--glass-bg-hover)] border border-[var(--glass-border)] transition-all duration-200 -mr-1"
             aria-label="Menue schliessen"
           >
             <X className="h-4.5 w-4.5" strokeWidth={1.5} />
@@ -225,7 +225,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
 
         {/* Separator */}
         <div className={cn("my-3", collapsed ? "md:mx-2" : "mx-3")}>
-          <div className="h-px bg-[rgba(0,0,0,0.06)]" />
+          <div className="h-px bg-[rgba(0,0,0,0.06)] dark:bg-[rgba(255,255,255,0.06)]" />
         </div>
 
         {/* Secondary navigation */}
@@ -235,7 +235,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
 
         {/* Separator */}
         <div className={cn("my-3", collapsed ? "md:mx-2" : "mx-3")}>
-          <div className="h-px bg-[rgba(0,0,0,0.06)]" />
+          <div className="h-px bg-[rgba(0,0,0,0.06)] dark:bg-[rgba(255,255,255,0.06)]" />
         </div>
 
         {/* Settings */}
@@ -248,7 +248,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       <div className="hidden md:flex justify-center pb-2">
         <button
           onClick={onToggle}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(255,255,255,0.5)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.7)] transition-all duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--glass-bg)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--glass-bg-hover)] border border-[var(--glass-border)] transition-all duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
           aria-label={collapsed ? "Sidebar ausklappen" : "Sidebar einklappen"}
         >
           <ChevronLeft
@@ -265,12 +265,12 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       <div className="p-3">
         <div
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2.5 bg-[rgba(255,255,255,0.45)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5),0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-200",
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 bg-[var(--glass-bg)] shadow-[inset_0_0_0_1px_var(--glass-border),0_1px_3px_rgba(0,0,0,0.04)] border border-[var(--glass-border)] transition-all duration-200",
             collapsed && "md:justify-center md:px-2"
           )}
         >
           {/* Gradient initials avatar */}
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white text-xs font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 dark:bg-white text-white dark:text-black text-xs font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
             {userInitials}
           </div>
           {/* Mobile: always show. Desktop: hide when collapsed */}

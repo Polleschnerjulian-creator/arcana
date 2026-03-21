@@ -10,15 +10,22 @@ export default function AuthLayout({
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
         {/* Animated gradient background */}
         <div
-          className="fixed inset-0 -z-10"
+          className="fixed inset-0 -z-10 bg-[var(--color-bg)]"
           style={{
             background: "linear-gradient(135deg, #F5F5F7 0%, #ECECEE 30%, #F5F5F7 50%, #ECECEE 70%, #F5F5F7 100%)",
+          }}
+        />
+        {/* Dark mode background overlay */}
+        <div
+          className="fixed inset-0 -z-10 hidden dark:block"
+          style={{
+            background: "linear-gradient(135deg, #000000 0%, #0A0A0A 30%, #000000 50%, #0A0A0A 70%, #000000 100%)",
           }}
         />
 
         {/* Animated gradient orbs */}
         <div
-          className="fixed -z-10 h-[500px] w-[500px] rounded-full opacity-30 blur-[120px]"
+          className="fixed -z-10 h-[500px] w-[500px] rounded-full opacity-30 dark:opacity-15 blur-[120px]"
           style={{
             background: "radial-gradient(circle, rgba(0,0,0,0.08) 0%, transparent 70%)",
             top: "10%",
@@ -26,8 +33,18 @@ export default function AuthLayout({
             animation: "orbFloat1 20s ease-in-out infinite",
           }}
         />
+        {/* Dark mode orb variant */}
         <div
-          className="fixed -z-10 h-[400px] w-[400px] rounded-full opacity-20 blur-[100px]"
+          className="fixed -z-10 h-[500px] w-[500px] rounded-full opacity-0 dark:opacity-20 blur-[120px]"
+          style={{
+            background: "radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)",
+            top: "10%",
+            left: "15%",
+            animation: "orbFloat1 20s ease-in-out infinite",
+          }}
+        />
+        <div
+          className="fixed -z-10 h-[400px] w-[400px] rounded-full opacity-20 dark:opacity-0 blur-[100px]"
           style={{
             background: "radial-gradient(circle, rgba(0,0,0,0.1) 0%, transparent 70%)",
             bottom: "10%",
@@ -36,9 +53,27 @@ export default function AuthLayout({
           }}
         />
         <div
-          className="fixed -z-10 h-[350px] w-[350px] rounded-full opacity-15 blur-[90px]"
+          className="fixed -z-10 h-[400px] w-[400px] rounded-full opacity-0 dark:opacity-15 blur-[100px]"
+          style={{
+            background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)",
+            bottom: "10%",
+            right: "10%",
+            animation: "orbFloat2 25s ease-in-out infinite",
+          }}
+        />
+        <div
+          className="fixed -z-10 h-[350px] w-[350px] rounded-full opacity-15 dark:opacity-0 blur-[90px]"
           style={{
             background: "radial-gradient(circle, rgba(0,0,0,0.06) 0%, transparent 70%)",
+            top: "50%",
+            right: "30%",
+            animation: "orbFloat3 18s ease-in-out infinite",
+          }}
+        />
+        <div
+          className="fixed -z-10 h-[350px] w-[350px] rounded-full opacity-0 dark:opacity-10 blur-[90px]"
+          style={{
+            background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)",
             top: "50%",
             right: "30%",
             animation: "orbFloat3 18s ease-in-out infinite",
@@ -48,13 +83,7 @@ export default function AuthLayout({
         {/* Glass auth card */}
         <div className="w-full max-w-md">
           <div
-            className="rounded-2xl p-8 md:p-10"
-            style={{
-              background: "rgba(255, 255, 255, 0.72)",
-              backdropFilter: "blur(40px) saturate(180%)",
-              WebkitBackdropFilter: "blur(40px) saturate(180%)",
-              boxShadow: "0 8px 40px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
-            }}
+            className="rounded-2xl p-8 md:p-10 auth-glass-card"
           >
             {/* ARCANA Branding */}
             <div className="mb-8 flex flex-col items-center">

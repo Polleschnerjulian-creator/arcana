@@ -313,8 +313,8 @@ export default async function DashboardPage() {
               className={`glass glass-hover rounded-2xl p-5 animate-in delay-${i + 1}`}
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-                  <Icon className="h-4.5 w-4.5 text-primary" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black/[0.06] dark:bg-white/[0.08]">
+                  <Icon className="h-4.5 w-4.5 text-[var(--color-text)]" />
                 </div>
                 {card.trend && (
                   <span
@@ -355,7 +355,7 @@ export default async function DashboardPage() {
           return (
             <Link key={action.label} href={action.href}>
               <div className="glass glass-hover rounded-2xl p-5 flex flex-col items-center gap-3 text-center cursor-pointer group transition-transform duration-200 hover:scale-[1.02]">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-900 text-white shadow-glow group-hover:shadow-glow-lg transition-shadow duration-200">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-black shadow-glow group-hover:shadow-glow-lg transition-shadow duration-200">
                   <Icon className="h-5 w-5" />
                 </div>
                 <span className="text-sm font-medium text-text-primary">{action.label}</span>
@@ -380,11 +380,11 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-3 mb-5">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-xs font-medium text-emerald-600">Einnahmen</span>
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Einnahmen</span>
             </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-200/60 px-2.5 py-1">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-200/60 dark:bg-gray-600/30 px-2.5 py-1">
               <div className="w-2 h-2 rounded-full bg-gray-400" />
-              <span className="text-xs font-medium text-gray-500">Ausgaben</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Ausgaben</span>
             </div>
           </div>
 
@@ -406,7 +406,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className="flex-1 flex flex-col justify-end">
                       <div
-                        className="w-full rounded-t-md bg-gray-300/80 hover:bg-gray-400 transition-all duration-200 min-h-[2px]"
+                        className="w-full rounded-t-md bg-gray-300/80 dark:bg-gray-600/80 hover:bg-gray-400 dark:hover:bg-gray-500 transition-all duration-200 min-h-[2px]"
                         style={{ height: `${Math.max(expHeight, 1)}%` }}
                         title={`Ausgaben: ${formatCurrency(month.expenses)}`}
                       />
@@ -419,7 +419,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Summary */}
-          <div className="mt-5 pt-4 border-t border-white/20 grid grid-cols-2 gap-4">
+          <div className="mt-5 pt-4 border-t border-black/[0.06] dark:border-white/[0.08] grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-text-secondary">Gesamt (6 Mo.)</p>
               <p className="text-sm font-semibold text-emerald-500 font-mono tabular-nums mt-0.5">
@@ -428,7 +428,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-text-secondary">Gesamt (6 Mo.)</p>
-              <p className="text-sm font-semibold text-gray-500 font-mono tabular-nums mt-0.5">
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 font-mono tabular-nums mt-0.5">
                 {formatCurrency(data.monthlyTrend.reduce((s, m) => s + m.expenses, 0))}
               </p>
             </div>
@@ -450,7 +450,7 @@ export default async function DashboardPage() {
 
           {data.recentTransactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100/80 mb-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100/80 dark:bg-white/[0.06] mb-3">
                 <ArrowLeftRight className="h-5 w-5 text-text-secondary" />
               </div>
               <p className="text-sm text-text-secondary">Noch keine Buchungen vorhanden</p>
@@ -468,7 +468,7 @@ export default async function DashboardPage() {
                       key={tx.id}
                       className={`flex items-center gap-4 py-3.5 ${
                         i < data.recentTransactions.length - 1
-                          ? "border-b border-white/15"
+                          ? "border-b border-black/[0.06] dark:border-white/[0.06]"
                           : ""
                       }`}
                     >

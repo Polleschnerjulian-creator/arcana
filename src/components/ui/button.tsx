@@ -15,9 +15,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary: [
-        "bg-[#1D1D1F]",
-        "text-white shadow-md",
-        "hover:bg-black hover:shadow-glow hover:-translate-y-px",
+        "bg-[#1D1D1F] dark:bg-white",
+        "text-white dark:text-black shadow-md",
+        "hover:bg-black dark:hover:bg-gray-100 hover:shadow-glow hover:-translate-y-px",
         "active:scale-[0.98] active:shadow-sm",
         "focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-[var(--color-bg)]",
       ].join(" "),
@@ -38,8 +38,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ].join(" "),
       ghost: [
         "text-[var(--color-text-secondary)]",
-        "hover:bg-black/[0.04] hover:text-[var(--color-text)]",
-        "active:scale-[0.97] active:bg-black/[0.06]",
+        "hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-[var(--color-text)]",
+        "active:scale-[0.97] active:bg-black/[0.06] dark:active:bg-white/[0.08]",
         "focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-[var(--color-bg)]",
       ].join(" "),
     };

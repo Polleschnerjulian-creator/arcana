@@ -4,6 +4,7 @@ import * as React from "react";
 import { useSession } from "next-auth/react";
 import { Bell, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./theme-toggle";
 
 interface BreadcrumbItem {
   label: string;
@@ -38,10 +39,11 @@ export function Header({ breadcrumbs, collapsed, onMobileMenuToggle }: HeaderPro
         "ml-0"
       )}
       style={{
-        background: "rgba(255, 255, 255, 0.7)",
+        background: "var(--glass-bg)",
         backdropFilter: "blur(24px) saturate(180%)",
         WebkitBackdropFilter: "blur(24px) saturate(180%)",
-        boxShadow: "0 1px 0 rgba(0, 0, 0, 0.04), 0 2px 12px rgba(0, 0, 0, 0.03)",
+        borderBottom: "1px solid var(--glass-border)",
+        boxShadow: "var(--glass-shadow)",
       }}
     >
       {/* Left: Hamburger (mobile) + Breadcrumbs */}
@@ -49,7 +51,7 @@ export function Header({ breadcrumbs, collapsed, onMobileMenuToggle }: HeaderPro
         {/* Mobile hamburger */}
         <button
           onClick={onMobileMenuToggle}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.5)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[rgba(255,255,255,0.7)] transition-all duration-200 md:hidden -ml-1 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--glass-bg)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--glass-bg-hover)] border border-[var(--glass-border)] transition-all duration-200 md:hidden -ml-1 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
           aria-label="Menue oeffnen"
         >
           <Menu className="h-5 w-5" strokeWidth={1.5} />
@@ -86,14 +88,16 @@ export function Header({ breadcrumbs, collapsed, onMobileMenuToggle }: HeaderPro
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2.5">
+        <ThemeToggle />
+
         <button
-          className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,0.4)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-[rgba(255,255,255,0.65)] transition-all duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[var(--glass-bg)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--glass-bg-hover)] border border-[var(--glass-border)] transition-all duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
           aria-label="Benachrichtigungen"
         >
           <Bell className="h-[18px] w-[18px]" strokeWidth={1.5} />
         </button>
 
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-white text-xs font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2)] cursor-pointer transition-transform duration-200 hover:scale-105">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 dark:bg-white text-white dark:text-black text-xs font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2)] cursor-pointer transition-transform duration-200 hover:scale-105">
           {userInitials}
         </div>
       </div>
