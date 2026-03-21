@@ -35,6 +35,8 @@ model Organization {
   invoices          Invoice[]
   apiKeys           ApiKey[]
   webhookLogs       WebhookLog[]
+  recurringTemplates RecurringTemplate[]
+  categorizationRules CategorizationRule[]
 }
 
 model User {
@@ -309,4 +311,46 @@ model WebhookLog {
   @@index([organizationId])
   @@index([organizationId, source])
   @@index([createdAt])
+}
+
+// ─── Recurring Templates ──────────────────────────────────────────
+
+model RecurringTemplate {
+  id              String    @id @default(cuid())
+  organizationId  String
+  type            String    // INVOICE | TRANSACTION
+  name            String    // e.g., "Monatliche Büromiete"
+  interval        String    // MONTHLY | QUARTERLY | YEARLY
+  dayOfMonth      Int       @default(1) // 1-28
+  nextRunDate     DateTime
+  lastRunDate     DateTime?
+  isActive        Boolean   @default(true)
+  templateData    String    // JSON — invoice or transaction template
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([nextRunDate, isActive])
+}
+
+// ─── Categorization Rules (learning from user corrections) ────────
+
+model CategorizationRule {
+  id              String   @id @default(cuid())
+  organizationId  String
+  vendorPattern   String   // Normalized vendor/counterpart name pattern
+  debitAccount    String   // Account number for Soll
+  creditAccount   String   // Account number for Haben
+  taxRate         Float?   // 0, 7, 19
+  confidence      Float    @default(1.0) // User-confirmed = 1.0
+  usageCount      Int      @default(1)
+  lastUsedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, vendorPattern])
+  @@index([organizationId])
 }

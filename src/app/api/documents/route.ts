@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { saveDocument } from "@/lib/documents/storage";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
 import { runDocumentPipeline } from "@/lib/documents/auto-pipeline";
+import { formatDate } from "@/lib/utils";
 
 export const maxDuration = 60;
 
@@ -208,6 +209,24 @@ export async function POST(request: NextRequest) {
       file.name,
       session.user.organizationId
     );
+
+    // Check for exact duplicate (same file hash)
+    const existingByHash = await prisma.document.findFirst({
+      where: { organizationId: session.user.organizationId, sha256Hash },
+      select: { id: true, fileName: true, uploadedAt: true },
+    });
+
+    if (existingByHash) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Dieses Dokument wurde bereits hochgeladen (${existingByHash.fileName}, ${formatDate(existingByHash.uploadedAt)}).`,
+          duplicate: true,
+          existingId: existingByHash.id,
+        },
+        { status: 409 }
+      );
+    }
 
     // Create document record
     const document = await prisma.document.create({

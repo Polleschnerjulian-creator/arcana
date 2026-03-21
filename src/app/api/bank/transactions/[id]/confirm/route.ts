@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
+import { learnCategorization } from "@/lib/ai/learning";
 
 // ─── POST: Confirm AI-Suggested Match ────────────────────────────
 
@@ -98,6 +99,29 @@ export async function POST(
       });
     } catch {
       // Audit darf den Vorgang nicht blockieren
+    }
+
+    // Learn from the confirmed match for future auto-categorization
+    try {
+      if (updated.counterpartName && updated.matchedTransactionId) {
+        const lines = await prisma.transactionLine.findMany({
+          where: { transactionId: updated.matchedTransactionId },
+          include: { account: true },
+        });
+        const debit = lines.find((l) => Number(l.debit) > 0);
+        const credit = lines.find((l) => Number(l.credit) > 0);
+        if (debit && credit) {
+          await learnCategorization({
+            organizationId: session.user.organizationId,
+            vendorName: updated.counterpartName,
+            debitAccountNumber: debit.account.number,
+            creditAccountNumber: credit.account.number,
+            taxRate: debit.taxRate ?? undefined,
+          });
+        }
+      }
+    } catch {
+      // Learning is silent — never block the main flow
     }
 
     return NextResponse.json({

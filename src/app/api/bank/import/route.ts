@@ -176,7 +176,8 @@ export async function POST(request: NextRequest) {
     }
 
     // ─── Auto-Matching ─────────────────────────────────────────────
-    let autoMatched = 0;
+    let autoConfirmed = 0;
+    let autoSuggested = 0;
 
     try {
       // Fetch ALL unmatched bank transactions for this org (not just this batch)
@@ -232,17 +233,25 @@ export async function POST(request: NextRequest) {
             openItems
           );
 
-          // Auto-match if best match has confidence > 0.85
           if (matches.length > 0 && matches[0].confidence > 0.85) {
+            // >95% confidence: auto-confirm (no user action needed)
+            // 85-95% confidence: AI suggestion (user confirms)
+            const isHighConfidence = matches[0].confidence > 0.95;
+
             await prisma.bankTransaction.update({
               where: { id: bankTx.id },
               data: {
                 matchedTransactionId: matches[0].openItemId,
                 matchConfidence: matches[0].confidence,
-                matchStatus: "AI_SUGGESTED",
+                matchStatus: isHighConfidence ? "CONFIRMED" : "AI_SUGGESTED",
               },
             });
-            autoMatched++;
+
+            if (isHighConfidence) {
+              autoConfirmed++;
+            } else {
+              autoSuggested++;
+            }
 
             // Remove matched item from open items to prevent double-matching
             const matchedIdx = openItems.findIndex(
@@ -264,7 +273,9 @@ export async function POST(request: NextRequest) {
         success: true,
         data: {
           imported: created.length,
-          autoMatched,
+          autoConfirmed,
+          autoSuggested,
+          autoMatched: autoConfirmed + autoSuggested,
           batch: importBatch,
         },
       },

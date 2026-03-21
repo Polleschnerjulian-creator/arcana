@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { createWorker } from "tesseract.js";
 import { extractDocumentData } from "@/lib/ai/extract";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
+import { findLearnedCategorization } from "@/lib/ai/learning";
 import type { AiExtraction } from "@/types";
 
 // ─── Auto-Pipeline: Upload -> OCR -> AI Extract -> Draft Transaction ──
@@ -240,34 +241,78 @@ export async function runDocumentPipeline(
 
       const chartOfAccounts = org?.chartOfAccounts || "SKR03";
 
-      // Look up expense account — default to 4900 (Sonstige betriebliche Aufwendungen)
-      const expenseAccountNumber = "4900";
-      let expenseAccount = await prisma.account.findFirst({
-        where: { organizationId, number: expenseAccountNumber },
-      });
+      // Step 1: Check learned categorization (free, instant)
+      const learned = extraction.vendor
+        ? await findLearnedCategorization(organizationId, extraction.vendor)
+        : null;
 
-      if (!expenseAccount) {
-        // Fallback: find any EXPENSE account
-        expenseAccount = await prisma.account.findFirst({
-          where: { organizationId, type: "EXPENSE" },
-        });
+      if (learned) {
+        console.log(
+          `[Auto-Pipeline] Using learned categorization for "${extraction.vendor}" (confidence: ${learned.confidence})`
+        );
       }
 
-      // Bank account: 1200 for SKR03, 1800 for SKR04
-      const bankAccountNumber = chartOfAccounts === "SKR04" ? "1800" : "1200";
-      let bankAccount = await prisma.account.findFirst({
-        where: { organizationId, number: bankAccountNumber },
-      });
+      // Determine accounts based on learned rule or defaults
+      let expenseAccount: { id: string; number: string } | null = null;
+      let bankAccount: { id: string; number: string } | null = null;
 
-      if (!bankAccount) {
-        // Fallback: find any ASSET account with "Bank" in name
-        bankAccount = await prisma.account.findFirst({
-          where: {
-            organizationId,
-            type: "ASSET",
-            name: { contains: "Bank" },
-          },
+      if (learned) {
+        // Use learned categorization accounts
+        const learnedDebit = await prisma.account.findFirst({
+          where: { organizationId, number: learned.debitAccount },
+          select: { id: true, number: true },
         });
+        const learnedCredit = await prisma.account.findFirst({
+          where: { organizationId, number: learned.creditAccount },
+          select: { id: true, number: true },
+        });
+
+        if (learnedDebit && learnedCredit) {
+          expenseAccount = learnedDebit;
+          bankAccount = learnedCredit;
+        }
+      }
+
+      if (!expenseAccount || !bankAccount) {
+        // Fallback: default account lookup
+        const expenseAccountNumber = "4900";
+        const foundExpense = await prisma.account.findFirst({
+          where: { organizationId, number: expenseAccountNumber },
+          select: { id: true, number: true },
+        });
+
+        if (!foundExpense) {
+          // Fallback: find any EXPENSE account
+          const anyExpense = await prisma.account.findFirst({
+            where: { organizationId, type: "EXPENSE" },
+            select: { id: true, number: true },
+          });
+          expenseAccount = anyExpense;
+        } else {
+          expenseAccount = foundExpense;
+        }
+
+        // Bank account: 1200 for SKR03, 1800 for SKR04
+        const bankAccountNumber = chartOfAccounts === "SKR04" ? "1800" : "1200";
+        const foundBank = await prisma.account.findFirst({
+          where: { organizationId, number: bankAccountNumber },
+          select: { id: true, number: true },
+        });
+
+        if (!foundBank) {
+          // Fallback: find any ASSET account with "Bank" in name
+          const anyBank = await prisma.account.findFirst({
+            where: {
+              organizationId,
+              type: "ASSET",
+              name: { contains: "Bank" },
+            },
+            select: { id: true, number: true },
+          });
+          bankAccount = anyBank;
+        } else {
+          bankAccount = foundBank;
+        }
       }
 
       if (!expenseAccount || !bankAccount) {
@@ -278,7 +323,7 @@ export async function runDocumentPipeline(
       }
 
       const grossAmount = extraction.amount;
-      const taxRate = extraction.taxRate ?? 0;
+      const taxRate = learned?.taxRate ?? extraction.taxRate ?? 0;
 
       // Build transaction lines
       const lines: {

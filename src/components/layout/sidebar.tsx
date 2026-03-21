@@ -15,6 +15,7 @@ import {
   Calculator,
   Settings,
   Plug,
+  Repeat,
   ChevronLeft,
   LogOut,
   X,
@@ -79,6 +80,7 @@ const secondaryNavigation = [
 
 const settingsNavigation = [
   { name: "Einstellungen", href: "/settings", icon: Settings },
+  { name: "Dauerauftraege", href: "/settings/recurring", icon: Repeat },
   { name: "Integrationen", href: "/settings/integrations", icon: Plug },
 ];
 

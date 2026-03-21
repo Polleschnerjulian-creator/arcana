@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { validateDoubleEntry } from "@/lib/accounting/ledger";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
 import { validateOrigin } from "@/lib/csrf";
+import { learnCategorization } from "@/lib/ai/learning";
 
 // ─── POST: Festschreibung (Book a DRAFT Transaction) ────────────
 
@@ -119,6 +120,31 @@ export async function POST(
       });
     } catch {
       // Audit module may not be ready
+    }
+
+    // Learn from this booking for future auto-categorization
+    try {
+      const doc = await prisma.document.findFirst({
+        where: { transactions: { some: { id: params.id } } },
+      });
+      if (doc?.aiExtraction) {
+        const extraction = JSON.parse(doc.aiExtraction as string);
+        if (extraction.vendor) {
+          const debitLine = booked.lines.find((l) => Number(l.debit) > 0);
+          const creditLine = booked.lines.find((l) => Number(l.credit) > 0);
+          if (debitLine && creditLine) {
+            await learnCategorization({
+              organizationId: session.user.organizationId,
+              vendorName: extraction.vendor,
+              debitAccountNumber: debitLine.account.number,
+              creditAccountNumber: creditLine.account.number,
+              taxRate: debitLine.taxRate ?? undefined,
+            });
+          }
+        }
+      }
+    } catch {
+      // Learning is silent — never block the main flow
     }
 
     // Serialize Decimal fields

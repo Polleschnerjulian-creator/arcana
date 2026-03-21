@@ -81,6 +81,8 @@ export function ImportForm({ bankAccounts }: ImportFormProps) {
   const [importResult, setImportResult] = useState<{
     success: boolean;
     count: number;
+    autoConfirmed: number;
+    autoSuggested: number;
     autoMatched: number;
     message: string;
   } | null>(null);
@@ -181,16 +183,25 @@ export function ImportForm({ bankAccounts }: ImportFormProps) {
       }
 
       const importedCount = data.data?.imported || data.data?.importedCount || 0;
-      const autoMatchedCount = data.data?.autoMatched || 0;
+      const autoConfirmedCount = data.data?.autoConfirmed || 0;
+      const autoSuggestedCount = data.data?.autoSuggested || 0;
+      const autoMatchedCount = autoConfirmedCount + autoSuggestedCount;
 
-      const message =
-        autoMatchedCount > 0
-          ? `${importedCount} Ums\u00e4tze importiert, davon ${autoMatchedCount} automatisch zugeordnet.`
-          : `${importedCount} Ums\u00e4tze erfolgreich importiert.`;
+      // Build detailed message
+      const parts: string[] = [`${importedCount} Umsätze importiert`];
+      if (autoConfirmedCount > 0) {
+        parts.push(`${autoConfirmedCount} automatisch bestätigt`);
+      }
+      if (autoSuggestedCount > 0) {
+        parts.push(`${autoSuggestedCount} Vorschläge zur Prüfung`);
+      }
+      const message = parts.join(", ") + ".";
 
       setImportResult({
         success: true,
         count: importedCount,
+        autoConfirmed: autoConfirmedCount,
+        autoSuggested: autoSuggestedCount,
         autoMatched: autoMatchedCount,
         message,
       });
