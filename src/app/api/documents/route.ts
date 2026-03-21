@@ -280,9 +280,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error uploading document:", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("Error uploading document:", errMsg, error);
     return NextResponse.json(
-      { success: false, error: "Interner Serverfehler." },
+      { success: false, error: errMsg.includes("BLOB_READ_WRITE_TOKEN") ? errMsg : "Interner Serverfehler." },
       { status: 500 }
     );
   }

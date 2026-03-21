@@ -73,9 +73,18 @@ export async function POST(request: Request) {
     const pathname = `logos/${orgId}/logo-${Date.now()}.${ext}`;
 
     // Upload to Vercel Blob
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "Blob-Speicher nicht konfiguriert." },
+        { status: 503 }
+      );
+    }
+
     const blob = await put(pathname, file, {
       access: "public",
       contentType: file.type,
+      token,
     });
 
     // Get existing settings to check for old logo

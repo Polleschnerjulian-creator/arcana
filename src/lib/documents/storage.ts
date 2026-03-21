@@ -26,9 +26,15 @@ export async function saveDocument(
   const randomPrefix = crypto.randomBytes(16).toString("hex");
   const blobPath = `documents/${organizationId}/${randomPrefix}-${fileName}`;
 
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    throw new Error("BLOB_READ_WRITE_TOKEN ist nicht konfiguriert. Bitte in den Vercel Einstellungen setzen.");
+  }
+
   const blob = await put(blobPath, file, {
     access: "public",
     contentType: getMimeType(fileName),
+    token,
   });
 
   return {
@@ -50,7 +56,9 @@ export function getDocumentUrl(storagePath: string): string {
  * Löscht eine Datei aus dem Vercel Blob Storage.
  */
 export async function deleteDocument(storagePath: string): Promise<void> {
-  await del(storagePath);
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN nicht konfiguriert.");
+  await del(storagePath, { token });
 }
 
 function getMimeType(fileName: string): string {
