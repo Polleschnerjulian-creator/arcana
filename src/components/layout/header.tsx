@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useSession } from "next-auth/react";
-import { Bell } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BreadcrumbItem {
@@ -13,9 +13,10 @@ interface BreadcrumbItem {
 interface HeaderProps {
   breadcrumbs?: BreadcrumbItem[];
   collapsed?: boolean;
+  onMobileMenuToggle?: () => void;
 }
 
-export function Header({ breadcrumbs, collapsed }: HeaderProps) {
+export function Header({ breadcrumbs, collapsed, onMobileMenuToggle }: HeaderProps) {
   const { data: session } = useSession();
 
   const userInitials = session?.user?.name
@@ -30,12 +31,24 @@ export function Header({ breadcrumbs, collapsed }: HeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-6 transition-all duration-200",
-        collapsed ? "ml-[72px]" : "ml-[260px]"
+        "sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-sm px-4 md:px-6 transition-all duration-200",
+        // Desktop: offset by sidebar width
+        collapsed ? "md:ml-[72px]" : "md:ml-[260px]",
+        // Mobile: no left margin
+        "ml-0"
       )}
     >
-      {/* Left: Breadcrumbs */}
-      <div className="flex items-center gap-2">
+      {/* Left: Hamburger (mobile) + Breadcrumbs */}
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <button
+          onClick={onMobileMenuToggle}
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-gray-100 transition-colors md:hidden -ml-1"
+          aria-label="Menue oeffnen"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
         {breadcrumbs && breadcrumbs.length > 0 ? (
           <nav className="flex items-center gap-1.5 text-sm">
             {breadcrumbs.map((crumb, index) => (
