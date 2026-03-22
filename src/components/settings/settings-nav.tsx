@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Building2,
   User,
+  Users,
   Palette,
   Repeat,
   Plug,
@@ -32,6 +33,7 @@ const sections: NavSection[] = [
     items: [
       { name: "Unternehmen", href: "/settings", icon: Building2 },
       { name: "Benutzer", href: "/settings/profile", icon: User },
+      { name: "Team", href: "/settings/team", icon: Users },
     ],
   },
   {

@@ -17,6 +17,8 @@ import {
   Landmark,
   BarChart3,
 } from "lucide-react";
+import { OnboardingCheck } from "@/components/onboarding/onboarding-check";
+import { InsightsPanel } from "@/components/dashboard/insights-panel";
 
 // ─── Data Fetching ───────────────────────────────────────────────
 
@@ -227,6 +229,14 @@ export default async function DashboardPage() {
 
   const data = await getDashboardData(organizationId);
 
+  // Check if user is completely new (no data at all) — for onboarding
+  const [transactionCount, documentCount, invoiceCount] = await Promise.all([
+    prisma.transaction.count({ where: { organizationId }, take: 1 }),
+    prisma.document.count({ where: { organizationId }, take: 1 }),
+    prisma.invoice.count({ where: { organizationId }, take: 1 }),
+  ]);
+  const isEmpty = transactionCount === 0 && documentCount === 0 && invoiceCount === 0;
+
   const revenueTrend = calcTrend(data.revenue, data.revenueLast);
   const expensesTrend = calcTrend(data.expenses, data.expensesLast);
 
@@ -292,6 +302,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Onboarding Wizard (only for new users with no data) */}
+      <OnboardingCheck isEmpty={isEmpty} />
+
       {/* Welcome Header */}
       <div className="animate-in">
         <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
@@ -299,6 +312,9 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-sm text-text-secondary mt-1.5">{dateStr}</p>
       </div>
+
+      {/* Smart Insights */}
+      <InsightsPanel />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

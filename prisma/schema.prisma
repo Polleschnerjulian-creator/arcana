@@ -388,3 +388,17 @@ model ShopifyOrder {
   @@unique([organizationId, shopifyOrderId])
   @@index([organizationId])
 }
+
+// ─── Password Reset ──────────────────────────────────────────────
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  email     String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([email])
+}

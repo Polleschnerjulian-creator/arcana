@@ -3,6 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createAuditEntry } from "@/lib/compliance/audit-log";
+import { sendEmail } from "@/lib/email";
+import {
+  generateInvoiceHTML,
+  type InvoiceData,
+  type InvoiceLineItem,
+  type InvoiceSettings,
+  type OrgData,
+} from "@/lib/invoices/pdf";
 
 // ─── POST: Mark Invoice as SENT ─────────────────────────────────
 // Creates a DRAFT transaction with double-entry booking:
@@ -23,12 +31,16 @@ const TAX_ACCOUNTS: Record<number, string> = {
 };
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
+
+    // Parse optional email from request body
+    const body = await request.json().catch(() => ({}));
+    const customerEmail: string | undefined = body?.email;
 
     if (!session?.user?.organizationId) {
       return NextResponse.json(
@@ -206,6 +218,77 @@ export async function POST(
       // Audit module may not be ready
     }
 
+    // Send invoice via email if customer email is provided
+    let emailSent = false;
+    let emailError: string | undefined;
+
+    if (customerEmail) {
+      try {
+        // Build invoice data for HTML generation
+        const org = await prisma.organization.findUnique({
+          where: { id: session.user.organizationId },
+          select: {
+            name: true,
+            street: true,
+            city: true,
+            zip: true,
+            ustId: true,
+            taxId: true,
+            settings: true,
+          },
+        });
+
+        if (org) {
+          const lineItems: InvoiceLineItem[] = JSON.parse(invoice.lineItems);
+          const invoiceData: InvoiceData = {
+            invoiceNumber: invoice.invoiceNumber,
+            customerName: invoice.customerName,
+            customerAddress: invoice.customerAddress || undefined,
+            issueDate: invoice.issueDate.toISOString(),
+            dueDate: invoice.dueDate.toISOString(),
+            lineItems,
+            subtotal,
+            taxRate,
+            taxAmount,
+            total,
+          };
+
+          let invoiceSettings: InvoiceSettings = {};
+          if (org.settings) {
+            try {
+              const parsed = JSON.parse(org.settings);
+              invoiceSettings = parsed.invoice || {};
+            } catch {
+              // Corrupted JSON — use defaults
+            }
+          }
+
+          const orgData: OrgData = {
+            name: org.name,
+            street: org.street || undefined,
+            city: org.city || undefined,
+            zip: org.zip || undefined,
+            ustId: org.ustId || undefined,
+            taxId: org.taxId || undefined,
+            invoiceSettings,
+          };
+
+          const htmlContent = generateInvoiceHTML(invoiceData, orgData);
+          const result = await sendEmail({
+            to: customerEmail,
+            subject: `Rechnung ${invoice.invoiceNumber}`,
+            html: htmlContent,
+          });
+
+          emailSent = result.success;
+          emailError = result.error;
+        }
+      } catch (err) {
+        console.error("Error sending invoice email:", err);
+        emailError = "E-Mail konnte nicht gesendet werden.";
+      }
+    }
+
     const serialized = {
       ...updated,
       subtotal: Number(updated.subtotal),
@@ -213,7 +296,12 @@ export async function POST(
       total: Number(updated.total),
     };
 
-    return NextResponse.json({ success: true, data: serialized });
+    return NextResponse.json({
+      success: true,
+      data: serialized,
+      emailSent,
+      emailError,
+    });
   } catch (error) {
     console.error("Error sending invoice:", error);
     return NextResponse.json(

@@ -12,6 +12,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const message = searchParams.get("message");
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -51,6 +52,13 @@ function LoginForm() {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {message === "password-reset" && (
+          <div className="rounded-xl bg-green-500/8 border border-green-200/30 p-3.5 text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0" />
+            Passwort erfolgreich geaendert. Bitte melden Sie sich an.
+          </div>
+        )}
+
         {error && (
           <div className="rounded-xl bg-red-500/8 border border-red-200/30 p-3.5 text-sm text-red-500 flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0" />
@@ -68,15 +76,25 @@ function LoginForm() {
           autoComplete="email"
         />
 
-        <Input
-          label="Passwort"
-          type="password"
-          placeholder="Passwort eingeben"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          autoComplete="current-password"
-        />
+        <div>
+          <Input
+            label="Passwort"
+            type="password"
+            placeholder="Passwort eingeben"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+          />
+          <div className="mt-1.5 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] transition-colors"
+            >
+              Passwort vergessen?
+            </Link>
+          </div>
+        </div>
 
         <Button
           type="submit"
