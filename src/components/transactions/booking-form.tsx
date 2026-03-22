@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
   AlertCircle,
   Loader2,
   Save,
+  FileDown,
+  ChevronDown,
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -61,6 +63,23 @@ function todayISO(): string {
 
 // ─── Component ──────────────────────────────────────────────────
 
+// ─── Template Types ─────────────────────────────────────────────
+
+interface TemplateLine {
+  accountNumber: string;
+  debit: boolean;
+  credit: boolean;
+  taxRate?: number | null;
+}
+
+interface BookingTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  templateLines: string; // JSON
+  isDefault: boolean;
+}
+
 export function BookingForm({ accounts }: BookingFormProps) {
   const router = useRouter();
 
@@ -82,6 +101,57 @@ export function BookingForm({ accounts }: BookingFormProps) {
   // Account search filter per line
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // ─── Templates ────────────────────────────────────────────────
+
+  const [templates, setTemplates] = useState<BookingTemplate[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templatesLoaded, setTemplatesLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadTemplates() {
+      try {
+        const res = await fetch("/api/templates");
+        const data = await res.json();
+        if (data.success) {
+          setTemplates(data.data);
+        }
+      } catch {
+        // Silently fail — templates are optional
+      } finally {
+        setTemplatesLoaded(true);
+      }
+    }
+    loadTemplates();
+  }, []);
+
+  function applyTemplate(template: BookingTemplate) {
+    try {
+      const templateLines: TemplateLine[] = JSON.parse(template.templateLines);
+      const newLines: BookingLine[] = templateLines.map((tl) => {
+        // Find the account by number
+        const account = accounts.find((a) => a.number === tl.accountNumber);
+        return {
+          key: generateKey(),
+          accountId: account?.id || "",
+          debit: tl.debit ? "" : "",
+          credit: tl.credit ? "" : "",
+        };
+      });
+
+      // Ensure at least 2 lines
+      while (newLines.length < 2) {
+        newLines.push(createEmptyLine());
+      }
+
+      setLines(newLines);
+      setDescription(template.name);
+      setShowTemplates(false);
+      setSearchTerms({});
+    } catch {
+      // Ignore parse errors
+    }
+  }
 
   // ─── Computed ───────────────────────────────────────────────
 
@@ -246,6 +316,61 @@ export function BookingForm({ accounts }: BookingFormProps) {
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {/* Template selector */}
+      {templatesLoaded && templates.length > 0 && (
+        <div className="relative">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setShowTemplates(!showTemplates)}
+            type="button"
+          >
+            <FileDown className="h-3.5 w-3.5" />
+            Vorlage laden
+            <ChevronDown className={cn(
+              "h-3.5 w-3.5 transition-transform",
+              showTemplates && "rotate-180"
+            )} />
+          </Button>
+
+          {showTemplates && (
+            <div className="absolute z-50 top-full left-0 mt-1 w-80 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl shadow-lg overflow-hidden">
+              <div className="p-2 border-b border-[var(--glass-border)]">
+                <p className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider px-2 py-1">
+                  Buchungsvorlagen
+                </p>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {templates.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    className="flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[var(--color-text)]">
+                        {t.name}
+                      </p>
+                      {t.description && (
+                        <p className="text-xs text-[var(--color-text-tertiary)] truncate">
+                          {t.description}
+                        </p>
+                      )}
+                    </div>
+                    {t.isDefault && (
+                      <span className="text-[10px] font-medium text-[var(--color-text-tertiary)] bg-black/[0.04] dark:bg-white/[0.04] px-1.5 py-0.5 rounded">
+                        Standard
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

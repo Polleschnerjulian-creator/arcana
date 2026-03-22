@@ -38,6 +38,9 @@ model Organization {
   recurringTemplates RecurringTemplate[]
   categorizationRules CategorizationRule[]
   shopifyConnection ShopifyConnection?
+  dunningEntries     DunningEntry[]
+  bookingTemplates   BookingTemplate[]
+  fixedAssets        FixedAsset[]
 }
 
 model User {
@@ -401,4 +404,63 @@ model PasswordReset {
 
   @@index([tokenHash])
   @@index([email])
+}
+
+// ─── Mahnwesen (Dunning / Payment Reminders) ─────────────────────
+
+model DunningEntry {
+  id              String   @id @default(cuid())
+  organizationId  String
+  invoiceId       String
+  level           Int      // 1 = Zahlungserinnerung, 2 = 1. Mahnung, 3 = 2. Mahnung
+  sentAt          DateTime @default(now())
+  dueDate         DateTime // New due date given in the reminder
+  fee             Decimal  @default(0) // Mahngebühr (optional)
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([invoiceId])
+}
+
+// ─── Buchungsvorlagen (Booking Templates) ─────────────────────────
+
+model BookingTemplate {
+  id              String   @id @default(cuid())
+  organizationId  String
+  name            String
+  description     String?
+  templateLines   String   // JSON: [{ accountNumber, debit, credit, taxRate? }]
+  isDefault       Boolean  @default(false)
+  usageCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+}
+
+// ─── Anlagenbuchhaltung (Fixed Asset Accounting) ─────────────────
+
+model FixedAsset {
+  id                 String    @id @default(cuid())
+  organizationId     String
+  name               String    // e.g., "MacBook Pro 16"
+  description        String?
+  accountId          String    // Linked Anlage account (e.g., 0320 PKW, 0420 Büro)
+  purchaseDate       DateTime
+  purchasePrice      Decimal   // Anschaffungskosten
+  usefulLifeYears    Int       // Nutzungsdauer in Jahren (AfA-Tabelle)
+  depreciationMethod String    @default("LINEAR") // LINEAR | DEGRESSIVE
+  residualValue      Decimal   @default(0) // Restwert
+  currentBookValue   Decimal   // Aktueller Buchwert
+  isActive           Boolean   @default(true) // false = ausgeschieden
+  disposalDate       DateTime?
+  disposalPrice      Decimal?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  organization       Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }

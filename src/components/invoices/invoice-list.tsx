@@ -18,6 +18,7 @@ import {
   Printer,
   XCircle,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -386,6 +387,61 @@ function InvoiceMobileCard({
 
 function InvoiceActions({ invoice }: { invoice: InvoiceData }) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [showDunning, setShowDunning] = useState(false);
+  const [dunningEmail, setDunningEmail] = useState("");
+  const [dunningInfo, setDunningInfo] = useState<{
+    level: number;
+    label: string;
+    suggestedFee: number;
+  } | null>(null);
+  const [dunningFee, setDunningFee] = useState<string>("0");
+  const [dunningLoading, setDunningLoading] = useState(false);
+  const [dunningError, setDunningError] = useState<string | null>(null);
+
+  async function handleOpenDunning() {
+    setShowDunning(true);
+    setDunningError(null);
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}/dunning`);
+      const data = await res.json();
+      if (data.success && data.data.nextLevel) {
+        setDunningInfo(data.data.nextLevel);
+        setDunningFee(String(data.data.nextLevel.suggestedFee));
+      }
+    } catch {
+      setDunningError("Mahnungsinformationen konnten nicht geladen werden.");
+    }
+  }
+
+  async function handleSendDunning() {
+    if (!dunningEmail.trim()) {
+      setDunningError("Bitte eine E-Mail-Adresse eingeben.");
+      return;
+    }
+    setDunningLoading(true);
+    setDunningError(null);
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}/dunning`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: dunningEmail.trim(),
+          fee: parseFloat(dunningFee) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setDunningError(data.error || "Ein Fehler ist aufgetreten.");
+        return;
+      }
+      setShowDunning(false);
+      window.location.reload();
+    } catch {
+      setDunningError("Ein Fehler ist aufgetreten.");
+    } finally {
+      setDunningLoading(false);
+    }
+  }
 
   async function handleAction(action: "send" | "paid" | "cancel" | "delete") {
     if (isLoading) return;
@@ -586,6 +642,15 @@ function InvoiceActions({ invoice }: { invoice: InvoiceData }) {
               )}
               Als bezahlt markieren
             </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleOpenDunning}
+              disabled={isLoading !== null}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Mahnen
+            </Button>
             <Button size="sm" variant="secondary" onClick={handlePrint}>
               <Printer className="h-3.5 w-3.5" />
               Drucken/PDF
@@ -613,6 +678,86 @@ function InvoiceActions({ invoice }: { invoice: InvoiceData }) {
           </Button>
         )}
       </div>
+
+      {/* Dunning Dialog */}
+      {showDunning && (
+        <div className="mt-4 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-[var(--color-text)]">
+              {dunningInfo ? dunningInfo.label : "Mahnung senden"}
+            </h4>
+            <button
+              onClick={() => setShowDunning(false)}
+              className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text)] transition-colors"
+            >
+              <XCircle className="h-4 w-4" />
+            </button>
+          </div>
+
+          {dunningInfo && (
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              Stufe {dunningInfo.level}: {dunningInfo.label}
+              {dunningInfo.suggestedFee > 0 &&
+                ` (Vorgeschlagene Gebühr: ${dunningInfo.suggestedFee},00 \u20AC)`}
+            </p>
+          )}
+
+          {dunningError && (
+            <p className="text-xs text-red-500">{dunningError}</p>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                Empfänger E-Mail
+              </label>
+              <input
+                type="email"
+                value={dunningEmail}
+                onChange={(e) => setDunningEmail(e.target.value)}
+                placeholder="kunde@beispiel.de"
+                className="flex h-9 w-full rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] px-3 py-1.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-glow)]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                Mahngebühr (EUR)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={dunningFee}
+                onChange={(e) => setDunningFee(e.target.value)}
+                className="flex h-9 w-full rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] px-3 py-1.5 text-sm text-[var(--color-text)] font-mono focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-glow)]"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setShowDunning(false)}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={handleSendDunning}
+              disabled={dunningLoading}
+            >
+              {dunningLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="h-3.5 w-3.5" />
+              )}
+              Mahnung senden
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
