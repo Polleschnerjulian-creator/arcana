@@ -551,18 +551,18 @@ function Footer() {
 
           {/* Links */}
           <nav className="flex items-center gap-6 text-sm text-white/40">
-            <a
+            <Link
               href="/impressum"
               className="hover:text-white/70 transition-colors"
             >
               Impressum
-            </a>
-            <a
+            </Link>
+            <Link
               href="/datenschutz"
               className="hover:text-white/70 transition-colors"
             >
               Datenschutz
-            </a>
+            </Link>
             <a href="/agb" className="hover:text-white/70 transition-colors">
               AGB
             </a>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SessionProvider } from "@/components/providers/session-provider";
 
 export default function AuthLayout({
@@ -94,6 +95,11 @@ export default function AuthLayout({
               </p>
             </div>
             {children}
+          </div>
+          <div className="mt-6 text-center text-xs text-[var(--color-text-tertiary)]">
+            <Link href="/impressum" className="hover:text-[var(--color-text-secondary)] transition-colors">Impressum</Link>
+            <span className="mx-2">&middot;</span>
+            <Link href="/datenschutz" className="hover:text-[var(--color-text-secondary)] transition-colors">Datenschutz</Link>
           </div>
         </div>
 
